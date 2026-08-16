@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/*
+  Real brand tokens, pulled from the old iOS app screenshots:
+  - Navy wordmark, sage-green swoosh accent
+  - iOS-style medium blue for nav links / active states
+  - Light neutral grays, white surfaces — clean, airy, native feel
+*/
+@theme {
+  --color-brand-navy: #1E3A54;
+  --color-brand-sage: #8FBFA0;
+  --color-brand-link: #2F6FBB;
+  --color-brand-bg: #F5F6F7;
+  --color-brand-gray: #8E8E93;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  color: var(--color-brand-navy);
+}
