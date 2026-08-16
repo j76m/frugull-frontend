@@ -4,13 +4,14 @@ import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
 import SeagullMascot from '../components/SeagullMascot';
 import DealCard from '../components/DealCard';
+import DealMap from '../components/DealMap';
 import MOCK_DEALS from '../data/mockDeals';
-import { Search as SearchIcon, LocateFixed } from 'lucide-react';
+import { Search as SearchIcon } from 'lucide-react';
 
 export default function Search() {
   const navigate = useNavigate();
   const [view, setView] = useState('map'); // 'map' | 'list'
-  // Demo only: once real map + deal markers exist, this flips to true
+  // Demo only: once real deal pins exist on the map, this flips to true
   // when a deal marker/card is selected, not a manual click toggle.
   const [mascotOpen, setMascotOpen] = useState(false);
 
@@ -32,29 +33,15 @@ export default function Search() {
             </div>
           </div>
 
-          {/* Map placeholder — real Google Map with category pins needs a
-              Google Maps API key in .env (VITE_GOOGLE_MAPS_API_KEY) before
-              this can be wired up for real. */}
-          <div className="relative bg-slate-200 h-[60vh] flex items-center justify-center">
-            <p className="text-brand-gray text-sm px-6 text-center">
-              Real map pins go here once we have a Google Maps API key set up.
-            </p>
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+          <div className="relative h-[60vh]">
+            <DealMap />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
               <SeagullMascot
                 isOpen={mascotOpen}
                 onClick={() => setMascotOpen((o) => !o)}
                 className="w-16 h-16"
               />
             </div>
-
-            <button
-              type="button"
-              aria-label="Center on my location"
-              className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-brand-navy"
-            >
-              <LocateFixed size={22} />
-            </button>
           </div>
         </>
       )}
