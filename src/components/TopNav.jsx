@@ -6,7 +6,7 @@ export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
       <div className="flex items-center justify-between px-4 py-2">
         <button
           onClick={onLeft}
-          className={`text-brand-link text-base min-w-[60px] text-left ${
+          className={`cursor-pointer text-brand-link text-sm font-semibold rounded-full border border-brand-link/40 bg-white hover:bg-brand-link hover:text-white px-3 py-1.5 min-w-[70px] text-center transition-colors ${
             !leftLabel && 'invisible'
           }`}
         >
@@ -15,7 +15,7 @@ export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
         <Wordmark className="h-10" />
         <button
           onClick={onRight}
-          className={`text-brand-link text-base min-w-[60px] text-right ${
+          className={`cursor-pointer text-brand-link text-sm font-semibold rounded-full border border-brand-link/40 bg-white hover:bg-brand-link hover:text-white px-3 py-1.5 min-w-[70px] text-center transition-colors ${
             !rightLabel && 'invisible'
           }`}
         >

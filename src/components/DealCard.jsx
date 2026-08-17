@@ -1,15 +1,15 @@
 export default function DealCard({ deal }) {
   return (
-    <div className="mb-6">
-      <p className="text-brand-navy font-semibold mb-2">{deal.businessName}</p>
-      <div className="w-full aspect-square bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center">
+    <div className="flex flex-col items-center text-center">
+      <div className="w-40 h-40 bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center">
         {deal.imageUrl ? (
           <img src={deal.imageUrl} alt={deal.businessName} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-brand-gray text-sm">No photo yet</span>
+          <span className="text-brand-gray text-xs px-2">No photo yet</span>
         )}
       </div>
-      <div className="flex items-center justify-between mt-2 text-sm">
+      <p className="text-brand-navy font-semibold mt-2 text-sm">{deal.businessName}</p>
+      <div className="flex items-center gap-3 mt-1 text-xs">
         <span className="text-brand-gray">{deal.distance}</span>
         <span className="text-brand-link">{deal.views} Views</span>
       </div>

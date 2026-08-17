@@ -17,8 +17,8 @@ export default function Search() {
 
   return (
     <AppLayout>
-      <TopNav
-        leftLabel="Settings"
+     <TopNav
+        leftLabel="Filter"
         onLeft={() => navigate('/filters')}
         rightLabel={view === 'map' ? 'List' : 'Map'}
         onRight={() => setView((v) => (v === 'map' ? 'list' : 'map'))}
@@ -48,8 +48,8 @@ export default function Search() {
         </>
       )}
 
-      {view === 'list' && (
-        <div className="p-4">
+  {view === 'list' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
           {MOCK_DEALS.map((deal) => (
             <DealCard key={deal.id} deal={deal} />
           ))}
