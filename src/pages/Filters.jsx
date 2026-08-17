@@ -6,9 +6,14 @@ import CATEGORIES from '../data/categories';
 
 export default function Filters() {
   const navigate = useNavigate();
-  // Empty set = "show everything" (no filter applied)
+  const [allSelected, setAllSelected] = useState(true);
   const [selectedSubs, setSelectedSubs] = useState(new Set());
   const [expanded, setExpanded] = useState(new Set());
+
+  function selectAll() {
+    setAllSelected(true);
+    setSelectedSubs(new Set());
+  }
 
   function toggleExpanded(name) {
     setExpanded((prev) => {
@@ -24,6 +29,10 @@ export default function Filters() {
       const next = new Set(prev);
       if (next.has(subName)) next.delete(subName);
       else next.add(subName);
+      // Picking any specific subcategory means we're no longer showing
+      // everything. If they uncheck their way back down to nothing
+      // selected, fall back to "All" rather than showing zero results.
+      setAllSelected(next.size === 0);
       return next;
     });
   }
@@ -33,9 +42,19 @@ export default function Filters() {
       <TopNav leftLabel="Back" onLeft={() => navigate(-1)} rightLabel="Apply" onRight={() => navigate(-1)} />
       <div className="max-w-md mx-auto p-4">
         <p className="text-brand-gray text-sm mb-4 text-center">
-          Select categories to show on the map. Leave nothing selected to see
-          everything.
+          Select categories to show on the map.
         </p>
+
+        <label className="flex items-center gap-2 py-3 border-b border-slate-200 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={selectAll}
+            className="w-4 h-4 accent-brand-link cursor-pointer"
+          />
+          <span className="text-brand-navy font-semibold">All</span>
+        </label>
+
         <div className="space-y-1">
           {CATEGORIES.map((cat) => {
             const isExpanded = expanded.has(cat.name);
