@@ -35,7 +35,9 @@ export default function Search() {
 
           <div className="relative h-[60vh]">
             <DealMap />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+
+            {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center">
               <SeagullMascot
                 isOpen={mascotOpen}
                 onClick={() => setMascotOpen((o) => !o)}
