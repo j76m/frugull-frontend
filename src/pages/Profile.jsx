@@ -1,62 +1,32 @@
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
+import RankProgress from '../components/RankProgress';
 import { useAuth } from '../context/AuthContext';
-
-// Loads every tier-ranking icon that actually exists in the folder right
-// now. Using import.meta.glob instead of static imports means if a file
-// (like gullfather.png) hasn't been added yet, the build doesn't break —
-// it just won't show that icon until the file is dropped in.
-const rankIcons = import.meta.glob('../assets/tier-rankings/*.png', {
-  eager: true,
-  import: 'default',
-});
-
-// rank_tier values from the backend don't always match filenames exactly
-// (e.g. "baby_gull" vs babygull.png), so map each explicitly.
-const RANK_TO_FILENAME = {
-  egg: 'egg',
-  baby_gull: 'babygull',
-  gull: 'gull',
-  frugull: 'frugull',
-  gullfather: 'gullfather',
-};
-
-function getRankIconUrl(rankTier) {
-  const filename = RANK_TO_FILENAME[rankTier];
-  if (!filename) return null;
-  const match = Object.entries(rankIcons).find(([path]) =>
-    path.endsWith(`/${filename}.png`)
-  );
-  return match ? match[1] : null;
-}
-
-const RANK_LABELS = {
-  egg: 'Egg',
-  baby_gull: 'Baby Gull',
-  gull: 'Gull',
-  frugull: 'Frugull',
-  gullfather: 'Gullfather',
-};
+import { TIERS } from '../data/ranks';
+import { getRankIconUrl } from '../utils/rankIcons';
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const rankIconUrl = getRankIconUrl(user?.rank_tier);
-  const rankLabel = RANK_LABELS[user?.rank_tier] ?? user?.rank_tier;
+  const currentTier = TIERS.find((t) => t.key === user?.rank_tier);
+  const rankIconUrl = currentTier ? getRankIconUrl(currentTier.filename) : null;
 
   return (
     <AppLayout>
       <TopNav />
       <div className="max-w-sm mx-auto p-4 flex flex-col items-center text-center">
+        <div className="w-full mb-6">
+          <RankProgress points={user?.points_balance} />
+        </div>
+
         <div className="w-full bg-white rounded-xl border border-slate-200 p-6 flex flex-col items-center gap-2">
           <p className="text-brand-navy font-semibold text-lg">{user?.username}</p>
-          <p className="text-brand-gray text-sm">{user?.email}</p>
 
-          <div className="flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5 mt-2">
+          <div className="flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5 mt-1">
             {rankIconUrl && (
-              <img src={rankIconUrl} alt={rankLabel} className="w-5 h-5 object-contain" />
+              <img src={rankIconUrl} alt={currentTier?.label} className="w-5 h-5 object-contain" />
             )}
             <span className="text-brand-link font-medium text-sm">
-              {rankLabel} · {user?.points_balance ?? 0} pts
+              {currentTier?.label ?? user?.rank_tier} · {user?.points_balance ?? 0} pts
             </span>
           </div>
         </div>
