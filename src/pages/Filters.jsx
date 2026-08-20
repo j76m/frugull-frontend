@@ -37,6 +37,23 @@ export default function Filters() {
     });
   }
 
+  // Selects/clears every subcategory within a single category at once —
+  // scoped to that category rather than the whole site, since a single
+  // global "everything" toggle doesn't hold up once there's real deal volume.
+  function toggleCategoryAll(cat) {
+    setSelectedSubs((prev) => {
+      const next = new Set(prev);
+      const allInCategorySelected = cat.subcategories.every((s) => next.has(s));
+      if (allInCategorySelected) {
+        cat.subcategories.forEach((s) => next.delete(s));
+      } else {
+        cat.subcategories.forEach((s) => next.add(s));
+      }
+      setAllSelected(next.size === 0);
+      return next;
+    });
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <TopNav leftLabel="Back" onLeft={() => navigate(-1)} rightLabel="Apply" onRight={() => navigate(-1)} />
@@ -59,6 +76,8 @@ export default function Filters() {
           {CATEGORIES.map((cat) => {
             const isExpanded = expanded.has(cat.name);
             const sortedSubs = [...cat.subcategories].sort((a, b) => a.localeCompare(b));
+            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s));
+
             return (
               <div key={cat.name} className="border-b border-slate-100">
                 <button
@@ -76,6 +95,18 @@ export default function Filters() {
 
                 {isExpanded && (
                   <div className="pb-3 pl-2 space-y-2">
+                    <label className="flex items-center gap-2 py-1 cursor-pointer border-b border-slate-100 pb-2 mb-1">
+                      <input
+                        type="checkbox"
+                        checked={allInCategorySelected}
+                        onChange={() => toggleCategoryAll(cat)}
+                        className="w-4 h-4 accent-brand-link cursor-pointer"
+                      />
+                      <span className="text-brand-navy text-sm font-medium">
+                        All {cat.name}
+                      </span>
+                    </label>
+
                     {sortedSubs.map((sub) => (
                       <label
                         key={sub}
