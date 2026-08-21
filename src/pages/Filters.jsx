@@ -8,12 +8,21 @@ import { useFilters } from '../context/FilterContext';
 export default function Filters() {
   const navigate = useNavigate();
   const { allSelected, selectedSubs, toggleAll, toggleSub, clearSelections } = useFilters();
-  // Tracks categories the user has manually clicked open/closed, as an
-  // override on top of the default (auto-open if it has selections).
-  const [manuallyToggled, setManuallyToggled] = useState(new Set());
+  // Starts pre-expanded for any category that already has a selection
+  // (so arriving on this screen shows what's active), but after that it's
+  // entirely user-controlled — selecting/deselecting items never
+  // auto-collapses or auto-expands anything on its own.
+  const [expanded, setExpanded] = useState(() => {
+    const initial = new Set();
+    CATEGORIES.forEach((cat) => {
+      const items = cat.subcategories.length > 0 ? cat.subcategories : [cat.name];
+      if (items.some((i) => selectedSubs.has(i))) initial.add(cat.name);
+    });
+    return initial;
+  });
 
   function toggleExpanded(name) {
-    setManuallyToggled((prev) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
       else next.add(name);
@@ -67,13 +76,7 @@ export default function Filters() {
             const isFlat = cat.subcategories.length === 0;
             const selectedCount = items.filter((s) => selectedSubs.has(s)).length;
             const hasSelections = selectedCount > 0;
-
-            // Auto-open any category that currently has a selection, so
-            // the user can see at a glance what's active without having
-            // to click into every row. Manually clicking the row still
-            // overrides that default open/closed state either way.
-            const defaultOpen = hasSelections;
-            const isExpanded = manuallyToggled.has(cat.name) ? !defaultOpen : defaultOpen;
+            const isExpanded = expanded.has(cat.name);
 
             return (
               <div key={cat.name} className="border-b border-slate-100">
