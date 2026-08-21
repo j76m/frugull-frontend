@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Wordmark from './Wordmark';
 
 export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
@@ -12,7 +13,9 @@ export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
         >
           {leftLabel}
         </button>
-        <Wordmark className="h-10" />
+        <Link to="/" className="cursor-pointer">
+          <Wordmark className="h-10" />
+        </Link>
         <button
           onClick={onRight}
           className={`cursor-pointer text-brand-link text-sm font-semibold rounded-full border border-brand-link/40 bg-white hover:bg-brand-link hover:text-white px-3 py-1.5 min-w-[70px] text-center transition-colors ${

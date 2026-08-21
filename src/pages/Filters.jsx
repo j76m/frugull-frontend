@@ -1,22 +1,19 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import TopNav from '../components/TopNav';
 import CATEGORIES from '../data/categories';
+import { useFilters } from '../context/FilterContext';
 
 export default function Filters() {
   const navigate = useNavigate();
-  const [allSelected, setAllSelected] = useState(true);
-  const [selectedSubs, setSelectedSubs] = useState(new Set());
-  const [expanded, setExpanded] = useState(new Set());
-
-  function selectAll() {
-    setAllSelected(true);
-    setSelectedSubs(new Set());
-  }
+  const { allSelected, selectedSubs, toggleAll, toggleSub, clearSelections } = useFilters();
+  // Tracks categories the user has manually clicked open/closed, as an
+  // override on top of the default (auto-open if it has selections).
+  const [manuallyToggled, setManuallyToggled] = useState(new Set());
 
   function toggleExpanded(name) {
-    setExpanded((prev) => {
+    setManuallyToggled((prev) => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
       else next.add(name);
@@ -24,33 +21,16 @@ export default function Filters() {
     });
   }
 
-  function toggleSub(subName) {
-    setSelectedSubs((prev) => {
-      const next = new Set(prev);
-      if (next.has(subName)) next.delete(subName);
-      else next.add(subName);
-      // Picking any specific subcategory means we're no longer showing
-      // everything. If they uncheck their way back down to nothing
-      // selected, fall back to "All" rather than showing zero results.
-      setAllSelected(next.size === 0);
-      return next;
-    });
-  }
-
-  // Selects/clears every subcategory within a single category at once —
-  // scoped to that category rather than the whole site, since a single
-  // global "everything" toggle doesn't hold up once there's real deal volume.
-  function toggleCategoryAll(cat) {
-    setSelectedSubs((prev) => {
-      const next = new Set(prev);
-      const allInCategorySelected = cat.subcategories.every((s) => next.has(s));
-      if (allInCategorySelected) {
-        cat.subcategories.forEach((s) => next.delete(s));
-      } else {
-        cat.subcategories.forEach((s) => next.add(s));
-      }
-      setAllSelected(next.size === 0);
-      return next;
+  // Toggles every item within a category at once. Categories with no real
+  // subcategories (e.g. Retail) use their own name as a stand-in "item" so
+  // they go through the exact same expand/All pattern as every other
+  // category, instead of needing a separate visual treatment.
+  function toggleCategoryAll(items) {
+    const allSelectedInGroup = items.every((s) => selectedSubs.has(s));
+    items.forEach((item) => {
+      const isSelected = selectedSubs.has(item);
+      if (allSelectedInGroup && isSelected) toggleSub(item);
+      if (!allSelectedInGroup && !isSelected) toggleSub(item);
     });
   }
 
@@ -58,15 +38,22 @@ export default function Filters() {
     <div className="min-h-screen bg-white">
       <TopNav leftLabel="Back" onLeft={() => navigate(-1)} rightLabel="Apply" onRight={() => navigate(-1)} />
       <div className="max-w-md mx-auto p-4">
-        <p className="text-brand-gray text-sm mb-4 text-center">
-          Select categories to show on the map.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-brand-gray text-sm">Select categories to show on the map.</p>
+          <button
+            type="button"
+            onClick={clearSelections}
+            className="text-brand-link text-xs font-medium cursor-pointer hover:underline whitespace-nowrap ml-3"
+          >
+            Clear Selections
+          </button>
+        </div>
 
         <label className="flex items-center gap-2 py-3 border-b border-slate-200 cursor-pointer">
           <input
             type="checkbox"
             checked={allSelected}
-            onChange={selectAll}
+            onChange={toggleAll}
             className="w-4 h-4 accent-brand-link cursor-pointer"
           />
           <span className="text-brand-navy font-semibold">All</span>
@@ -74,9 +61,19 @@ export default function Filters() {
 
         <div className="space-y-1">
           {CATEGORIES.map((cat) => {
-            const isExpanded = expanded.has(cat.name);
-            const sortedSubs = [...cat.subcategories].sort((a, b) => a.localeCompare(b));
-            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s));
+            const items = cat.subcategories.length > 0 ? cat.subcategories : [cat.name];
+            const sortedItems = [...items].sort((a, b) => a.localeCompare(b));
+            const allInCategorySelected = items.every((s) => selectedSubs.has(s));
+            const isFlat = cat.subcategories.length === 0;
+            const selectedCount = items.filter((s) => selectedSubs.has(s)).length;
+            const hasSelections = selectedCount > 0;
+
+            // Auto-open any category that currently has a selection, so
+            // the user can see at a glance what's active without having
+            // to click into every row. Manually clicking the row still
+            // overrides that default open/closed state either way.
+            const defaultOpen = hasSelections;
+            const isExpanded = manuallyToggled.has(cat.name) ? !defaultOpen : defaultOpen;
 
             return (
               <div key={cat.name} className="border-b border-slate-100">
@@ -85,11 +82,24 @@ export default function Filters() {
                   onClick={() => toggleExpanded(cat.name)}
                   className="w-full flex items-center justify-between py-3 cursor-pointer"
                 >
-                  <span className="text-brand-navy font-medium">{cat.name}</span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`font-medium ${
+                        hasSelections ? 'text-brand-link' : 'text-brand-navy'
+                      }`}
+                    >
+                      {cat.name}
+                    </span>
+                    {hasSelections && (
+                      <span className="text-[11px] font-semibold text-brand-link bg-blue-50 rounded-full px-2 py-0.5">
+                        {selectedCount}
+                      </span>
+                    )}
+                  </span>
                   {isExpanded ? (
-                    <ChevronUp size={18} className="text-brand-gray" />
+                    <ChevronUp size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
                   ) : (
-                    <ChevronDown size={18} className="text-brand-gray" />
+                    <ChevronDown size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
                   )}
                 </button>
 
@@ -99,7 +109,7 @@ export default function Filters() {
                       <input
                         type="checkbox"
                         checked={allInCategorySelected}
-                        onChange={() => toggleCategoryAll(cat)}
+                        onChange={() => toggleCategoryAll(items)}
                         className="w-4 h-4 accent-brand-link cursor-pointer"
                       />
                       <span className="text-brand-navy text-sm font-medium">
@@ -107,20 +117,21 @@ export default function Filters() {
                       </span>
                     </label>
 
-                    {sortedSubs.map((sub) => (
-                      <label
-                        key={sub}
-                        className="flex items-center gap-2 py-1 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedSubs.has(sub)}
-                          onChange={() => toggleSub(sub)}
-                          className="w-4 h-4 accent-brand-link cursor-pointer"
-                        />
-                        <span className="text-brand-navy text-sm">{sub}</span>
-                      </label>
-                    ))}
+                    {!isFlat &&
+                      sortedItems.map((sub) => (
+                        <label
+                          key={sub}
+                          className="flex items-center gap-2 py-1 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubs.has(sub)}
+                            onChange={() => toggleSub(sub)}
+                            className="w-4 h-4 accent-brand-link cursor-pointer"
+                          />
+                          <span className="text-brand-navy text-sm">{sub}</span>
+                        </label>
+                      ))}
                   </div>
                 )}
               </div>

@@ -9,8 +9,11 @@ export default function DealCard({ deal }) {
         )}
       </div>
       <p className="text-brand-navy font-semibold mt-2 text-sm">{deal.businessName}</p>
+      {deal.subcategoryName && (
+        <p className="text-brand-link text-xs font-medium">{deal.subcategoryName}</p>
+      )}
       <div className="flex items-center gap-3 mt-1 text-xs">
-        <span className="text-brand-gray">{deal.distance}</span>
+        {deal.distance && <span className="text-brand-gray">{deal.distance}</span>}
         <span className="text-brand-link">{deal.views} Views</span>
       </div>
     </div>

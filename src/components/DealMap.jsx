@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
 import { LocateFixed } from 'lucide-react';
+import { GOOGLE_MAPS_LIBRARIES } from '../utils/googleMapsLibraries';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -31,6 +32,7 @@ export default function DealMap({ children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const mapRef = useRef(null);

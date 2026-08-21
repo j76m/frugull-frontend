@@ -13,6 +13,7 @@ const CATEGORIES = [
   { name: 'For Sale by Owner', subcategories: ['Furniture', 'Electronics', 'Vehicles', 'Other'] },
   { name: 'Employment', subcategories: ['Full-time', 'Part-time', 'Gig/Freelance'] },
   { name: 'Property Rental', subcategories: ['Apartments', 'Rooms', 'Commercial'] },
+  { name: 'Retail', subcategories: ['Auto Products', 'Beauty Products', 'Clothing', 'Electronics', 'Grocery', 'Home Goods', 'Home Improvement', 'Other'] },
 ];
 
 export default CATEGORIES;
