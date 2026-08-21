@@ -51,7 +51,7 @@ export default function Search() {
           </div>
 
           <div className="relative h-[60vh]">
-            <DealMap>
+            <DealMap dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}>
               {visibleDeals.map((deal) => (
                 <Marker
                   key={deal.id}

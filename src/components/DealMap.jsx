@@ -14,6 +14,15 @@ const containerStyle = {
 // (matches the reference screenshots from the old app).
 const DEFAULT_CENTER = { lat: 40.015, lng: -105.2705 };
 
+// Roughly 1 degree of lat/lng ≈ 60-70 miles at Colorado's latitude. Only
+// deals within this rough box count toward the auto-fit view — this is
+// what keeps a single out-of-state deal from zooming the map out to show
+// the whole country once there's more data. Deals farther away still
+// exist and are still fetched — the user just has to pan to find them,
+// same as any normal map app.
+const NEARBY_DEGREE_RADIUS = 1;
+const MAX_ZOOM_AFTER_FIT = 15;
+
 // Muted, mostly-grayscale style matching the old app: hides Google's
 // default business/POI icons (Target, Costco, restaurants, etc.) and
 // transit markers so only OUR deal pins stand out, keeps roads in
@@ -28,7 +37,7 @@ const MAP_STYLES = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dae1' }] },
 ];
 
-export default function DealMap({ children }) {
+export default function DealMap({ dealPoints = [], children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -68,6 +77,35 @@ export default function DealMap({ children }) {
     if (isLoaded) centerOnMyLocation(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
+
+  // Once we have the user's real location, auto-fit the map to show
+  // every nearby deal (within NEARBY_DEGREE_RADIUS) instead of staying
+  // locked to a fixed zoom level around the user's exact spot.
+  const dealPointsKey = dealPoints.map((p) => `${p.lat},${p.lng}`).join('|');
+  useEffect(() => {
+    if (!hasRealLocation || !mapRef.current || !window.google) return;
+
+    const nearby = dealPoints.filter(
+      (p) =>
+        Math.abs(p.lat - center.lat) <= NEARBY_DEGREE_RADIUS &&
+        Math.abs(p.lng - center.lng) <= NEARBY_DEGREE_RADIUS
+    );
+
+    if (nearby.length === 0) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend(center);
+    nearby.forEach((p) => bounds.extend(p));
+    mapRef.current.fitBounds(bounds);
+
+    // fitBounds can zoom in too far for a single nearby point — cap it.
+    window.google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+      if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
+        mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRealLocation, dealPointsKey]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
