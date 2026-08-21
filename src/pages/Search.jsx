@@ -24,6 +24,12 @@ export default function Search() {
       .catch(() => setDealsError('Could not load deals.'));
   }, []);
 
+  function handleSearchArea(bounds) {
+    fetchDeals(bounds)
+      .then(setDeals)
+      .catch(() => setDealsError('Could not load deals for this area.'));
+  }
+
   // "All" shows everything unfiltered. Otherwise only keep deals whose
   // subcategory is one of the ones checked on the Filter screen.
   const visibleDeals = allSelected
@@ -51,7 +57,10 @@ export default function Search() {
           </div>
 
           <div className="relative h-[60vh]">
-            <DealMap dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}>
+            <DealMap
+              dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}
+              onSearchArea={handleSearchArea}
+            >
               {visibleDeals.map((deal) => (
                 <Marker
                   key={deal.id}

@@ -16,7 +16,13 @@ export async function createDeal({ businessId, categoryId, subcategoryId, captio
 
 // Response includes business_name, latitude, longitude joined in already —
 // no separate business lookup needed to place pins on the map.
-export async function fetchDeals() {
-  const { data } = await client.get('/deals');
+// Optional bounds = { north, south, east, west } scopes the query to a
+// specific map region — this is what powers the "Search this area" button
+// instead of always fetching every active deal in the database.
+export async function fetchDeals(bounds) {
+  const params = bounds
+    ? { north: bounds.north, south: bounds.south, east: bounds.east, west: bounds.west }
+    : {};
+  const { data } = await client.get('/deals', { params });
   return data.deals;
 }

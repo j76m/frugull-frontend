@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
-import { LocateFixed } from 'lucide-react';
+import { LocateFixed, Search as SearchIcon } from 'lucide-react';
 import { GOOGLE_MAPS_LIBRARIES } from '../utils/googleMapsLibraries';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -15,11 +15,9 @@ const containerStyle = {
 const DEFAULT_CENTER = { lat: 40.015, lng: -105.2705 };
 
 // Roughly 1 degree of lat/lng ≈ 60-70 miles at Colorado's latitude. Only
-// deals within this rough box count toward the auto-fit view — this is
-// what keeps a single out-of-state deal from zooming the map out to show
-// the whole country once there's more data. Deals farther away still
-// exist and are still fetched — the user just has to pan to find them,
-// same as any normal map app.
+// deals within this rough box count toward the very first auto-fit view.
+// After that, panning/zooming is entirely user-controlled via the
+// "Search this area" button, matching how Airbnb/Zillow-style maps work.
 const NEARBY_DEGREE_RADIUS = 1;
 const MAX_ZOOM_AFTER_FIT = 15;
 
@@ -37,7 +35,7 @@ const MAP_STYLES = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dae1' }] },
 ];
 
-export default function DealMap({ dealPoints = [], children }) {
+export default function DealMap({ dealPoints = [], onSearchArea, children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -47,9 +45,23 @@ export default function DealMap({ dealPoints = [], children }) {
   const mapRef = useRef(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [hasRealLocation, setHasRealLocation] = useState(false);
+  const [showSearchArea, setShowSearchArea] = useState(false);
+
+  // Tracks whether the map's current movement was triggered by our own
+  // code (geolocation centering, auto-fit) vs. an actual user drag/scroll.
+  // Only real user movement should reveal the "Search this area" button.
+  const isProgrammaticMove = useRef(false);
+  const hasAutoFitted = useRef(false);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
+
+    map.addListener('dragstart', () => {
+      if (!isProgrammaticMove.current) setShowSearchArea(true);
+    });
+    map.addListener('zoom_changed', () => {
+      if (!isProgrammaticMove.current) setShowSearchArea(true);
+    });
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -58,6 +70,7 @@ export default function DealMap({ dealPoints = [], children }) {
 
   function centerOnMyLocation(zoomIn = true) {
     if (!navigator.geolocation) return;
+    isProgrammaticMove.current = true;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -65,10 +78,10 @@ export default function DealMap({ dealPoints = [], children }) {
         setHasRealLocation(true);
         mapRef.current?.panTo(next);
         if (zoomIn) mapRef.current?.setZoom(14);
+        setTimeout(() => (isProgrammaticMove.current = false), 300);
       },
       () => {
-        // Permission denied or unavailable — silently keep the fallback
-        // center rather than blocking the map from rendering.
+        isProgrammaticMove.current = false;
       }
     );
   }
@@ -78,12 +91,11 @@ export default function DealMap({ dealPoints = [], children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
-  // Once we have the user's real location, auto-fit the map to show
-  // every nearby deal (within NEARBY_DEGREE_RADIUS) instead of staying
-  // locked to a fixed zoom level around the user's exact spot.
+  // Only auto-fit to nearby deals ONCE, on first load. After that, the
+  // user is in control of the viewport via pan/zoom + Search this area.
   const dealPointsKey = dealPoints.map((p) => `${p.lat},${p.lng}`).join('|');
   useEffect(() => {
-    if (!hasRealLocation || !mapRef.current || !window.google) return;
+    if (!hasRealLocation || !mapRef.current || !window.google || hasAutoFitted.current) return;
 
     const nearby = dealPoints.filter(
       (p) =>
@@ -93,19 +105,37 @@ export default function DealMap({ dealPoints = [], children }) {
 
     if (nearby.length === 0) return;
 
+    hasAutoFitted.current = true;
+    isProgrammaticMove.current = true;
+
     const bounds = new window.google.maps.LatLngBounds();
     bounds.extend(center);
     nearby.forEach((p) => bounds.extend(p));
     mapRef.current.fitBounds(bounds);
 
-    // fitBounds can zoom in too far for a single nearby point — cap it.
-    window.google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+    window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
       if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
         mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
       }
+      setTimeout(() => (isProgrammaticMove.current = false), 300);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasRealLocation, dealPointsKey]);
+
+  function handleSearchArea() {
+    if (!mapRef.current) return;
+    const bounds = mapRef.current.getBounds();
+    if (!bounds) return;
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+    onSearchArea?.({
+      north: ne.lat(),
+      south: sw.lat(),
+      east: ne.lng(),
+      west: sw.lng(),
+    });
+    setShowSearchArea(false);
+  }
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
@@ -163,6 +193,17 @@ export default function DealMap({ dealPoints = [], children }) {
         )}
         {children}
       </GoogleMap>
+
+      {showSearchArea && (
+        <button
+          type="button"
+          onClick={handleSearchArea}
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-brand-link text-sm font-semibold cursor-pointer hover:bg-slate-50"
+        >
+          <SearchIcon size={16} />
+          Search this area
+        </button>
+      )}
 
       <button
         type="button"
