@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Marker, InfoWindow } from '@react-google-maps/api';
+import { Marker } from '@react-google-maps/api';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
 import SeagullMascot from '../components/SeagullMascot';
 import DealCard from '../components/DealCard';
 import DealMap from '../components/DealMap';
+import DealDetailModal from '../components/DealDetailModal';
 import { fetchDeals } from '../api/deals';
 import { useFilters } from '../context/FilterContext';
 import { MapPin } from 'lucide-react';
@@ -118,33 +119,6 @@ export default function Search() {
                   onClick={() => setSelectedDealId(deal.id)}
                 />
               ))}
-
-              {selectedDeal && (
-                <InfoWindow
-                  position={{ lat: selectedDeal.latitude, lng: selectedDeal.longitude }}
-                  onCloseClick={() => setSelectedDealId(null)}
-                >
-                  <div className="max-w-[200px]">
-                    <p className="font-semibold text-brand-navy text-sm">
-                      {selectedDeal.business_name}
-                    </p>
-                    <p className="text-xs text-brand-link font-medium">
-                      {selectedDeal.subcategory_name}
-                    </p>
-                    {selectedDeal.image_url && (
-                      <img
-                        src={selectedDeal.image_url}
-                        alt={selectedDeal.business_name}
-                        className="w-full h-24 object-cover rounded mt-1"
-                      />
-                    )}
-                    <p className="text-xs text-slate-600 mt-1">{selectedDeal.caption}</p>
-                    <p className="text-[11px] text-brand-gray mt-1">
-                      Posted by {selectedDeal.posted_by}
-                    </p>
-                  </div>
-                </InfoWindow>
-              )}
             </DealMap>
 
             {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
@@ -174,6 +148,7 @@ export default function Search() {
           {visibleDeals.map((deal) => (
             <DealCard
               key={deal.id}
+              onClick={() => setSelectedDealId(deal.id)}
               deal={{
                 id: deal.id,
                 businessName: deal.business_name,
@@ -185,6 +160,8 @@ export default function Search() {
           ))}
         </div>
       )}
+
+      <DealDetailModal deal={selectedDeal} onClose={() => setSelectedDealId(null)} />
     </AppLayout>
   );
 }

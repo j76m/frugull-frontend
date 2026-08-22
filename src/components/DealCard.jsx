@@ -1,6 +1,10 @@
-export default function DealCard({ deal }) {
+export default function DealCard({ deal, onClick }) {
   return (
-    <div className="flex flex-col items-center text-center">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center text-center cursor-pointer"
+    >
       <div className="w-40 h-40 bg-slate-200 rounded-lg overflow-hidden flex items-center justify-center">
         {deal.imageUrl ? (
           <img src={deal.imageUrl} alt={deal.businessName} className="w-full h-full object-cover" />
@@ -16,6 +20,6 @@ export default function DealCard({ deal }) {
         {deal.distance && <span className="text-brand-gray">{deal.distance}</span>}
         <span className="text-brand-link">{deal.views} Views</span>
       </div>
-    </div>
+    </button>
   );
 }

@@ -1,0 +1,178 @@
+import { useState } from 'react';
+import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag } from 'lucide-react';
+import { submitReport } from '../api/reports';
+
+const REPORT_REASONS = [
+  { value: 'deal_no_longer_valid', label: 'Deal is no longer valid' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate', label: 'Inappropriate content' },
+  { value: 'other', label: 'Other' },
+];
+
+export default function DealDetailModal({ deal, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState(REPORT_REASONS[0].value);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+  const [reportError, setReportError] = useState('');
+
+  if (!deal) return null;
+
+  const shareUrl = window.location.origin + '/?deal=' + deal.id;
+  const shareText = deal.business_name + ' — ' + deal.subcategory_name;
+  const locationLine = [deal.city, deal.state].filter(Boolean).join(', ');
+  const directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + deal.latitude + ',' + deal.longitude;
+
+  async function handleShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: deal.business_name, text: shareText, url: shareUrl });
+      } catch {
+        // User cancelled the native share sheet.
+      }
+    }
+  }
+
+  function handleFacebookShare() {
+    const url = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  function handleEmailShare() {
+    const subject = encodeURIComponent('Check out this deal: ' + shareText);
+    const body = encodeURIComponent(shareText + '\n\n' + deal.caption + '\n\n' + shareUrl);
+    window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+  }
+
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access can fail silently (permissions, insecure context).
+    }
+  }
+
+  async function handleSubmitReport() {
+    setReportSubmitting(true);
+    setReportError('');
+    try {
+      await submitReport({ dealId: deal.id, reason: reportReason });
+      setReportDone(true);
+    } catch {
+      setReportError('Could not submit report. Try again.');
+    } finally {
+      setReportSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+        {deal.image_url && (
+          <div className="relative">
+            <img src={deal.image_url} alt={deal.business_name} className="w-full aspect-video object-cover" />
+            <button type="button" onClick={onClose} aria-label="Close" className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center cursor-pointer">
+              <X size={18} className="text-brand-navy" />
+            </button>
+          </div>
+        )}
+
+        <div className="p-5">
+          {!deal.image_url && (
+            <button type="button" onClick={onClose} aria-label="Close" className="float-right w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
+              <X size={18} className="text-brand-navy" />
+            </button>
+          )}
+
+          <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>
+          <p className="text-brand-link font-medium text-sm mt-0.5">{deal.subcategory_name}</p>
+          {locationLine && <p className="text-brand-gray text-sm mt-1">{locationLine}</p>}
+
+          <p className="text-brand-navy text-sm mt-3">{deal.caption}</p>
+          <p className="text-brand-gray text-xs mt-2">Posted by {deal.posted_by}</p>
+
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-brand-link text-white font-semibold py-3 cursor-pointer">
+              <MapPin size={18} />
+              Get Directions
+            </a>
+            {deal.phone && (
+              <a href={'tel:' + deal.phone} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-brand-navy text-sm font-medium py-2.5 cursor-pointer hover:bg-slate-200">
+                <Phone size={15} />
+                Call
+              </a>
+            )}
+            {deal.website && (
+              <a href={deal.website} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-brand-navy text-sm font-medium py-2.5 cursor-pointer hover:bg-slate-200">
+                <Globe size={15} />
+                Website
+              </a>
+            )}
+          </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <p className="text-brand-navy font-medium text-sm mb-2">Share this deal</p>
+            <div className="flex gap-2">
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button type="button" onClick={handleShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                  <Share2 size={15} />
+                  Share
+                </button>
+              )}
+              <button type="button" onClick={handleFacebookShare} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                Facebook
+              </button>
+              <button type="button" onClick={handleEmailShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                <Mail size={15} />
+                Email
+              </button>
+              <button type="button" onClick={handleCopyLink} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                <Link2 size={15} />
+                {copied ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+            <p className="text-brand-gray text-[11px] mt-2">
+              For Instagram: copy the link above, then paste it into your Story or DM.
+            </p>
+          </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            {!showReport && !reportDone && (
+              <button type="button" onClick={() => setShowReport(true)} className="flex items-center gap-1.5 text-red-500 text-sm font-medium cursor-pointer hover:underline">
+                <Flag size={15} />
+                Report this deal
+              </button>
+            )}
+
+            {reportDone && (
+              <p className="text-brand-gray text-sm">Thanks — this report has been submitted.</p>
+            )}
+
+            {showReport && !reportDone && (
+              <div className="space-y-3">
+                <p className="text-brand-navy text-sm font-medium">Why are you reporting this?</p>
+                <select value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-link">
+                  {REPORT_REASONS.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+                {reportError && <p className="text-red-500 text-xs">{reportError}</p>}
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setShowReport(false)} className="flex-1 rounded-xl bg-slate-100 text-brand-navy text-sm font-medium py-2.5 cursor-pointer hover:bg-slate-200">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleSubmitReport} disabled={reportSubmitting} className="flex-1 rounded-xl bg-red-500 text-white text-sm font-medium py-2.5 cursor-pointer disabled:opacity-50">
+                    {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
