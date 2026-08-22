@@ -35,7 +35,7 @@ const MAP_STYLES = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dae1' }] },
 ];
 
-export default function DealMap({ dealPoints = [], onSearchArea, children }) {
+export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -136,6 +136,17 @@ export default function DealMap({ dealPoints = [], onSearchArea, children }) {
     });
     setShowSearchArea(false);
   }
+
+  // Jump the map to a specific point (e.g. picking a city from the
+  // dropdown) without treating it as a user-initiated pan.
+  useEffect(() => {
+    if (!focusPosition || !mapRef.current) return;
+    isProgrammaticMove.current = true;
+    mapRef.current.panTo(focusPosition);
+    mapRef.current.setZoom(13);
+    setShowSearchArea(false);
+    setTimeout(() => (isProgrammaticMove.current = false), 300);
+  }, [focusPosition]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (

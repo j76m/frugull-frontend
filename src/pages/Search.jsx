@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Marker, InfoWindow } from '@react-google-maps/api';
 import AppLayout from '../components/AppLayout';
@@ -8,19 +8,27 @@ import DealCard from '../components/DealCard';
 import DealMap from '../components/DealMap';
 import { fetchDeals } from '../api/deals';
 import { useFilters } from '../context/FilterContext';
-import { Search as SearchIcon } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 export default function Search() {
   const navigate = useNavigate();
   const { allSelected, selectedSubs } = useFilters();
   const [view, setView] = useState('map'); // 'map' | 'list'
   const [deals, setDeals] = useState([]);
+  // Kept separate from `deals` (which narrows when "Search this area" is
+  // used) so the city dropdown always reflects everywhere with active
+  // deals, not just the currently visible map region.
+  const [allDeals, setAllDeals] = useState([]);
   const [dealsError, setDealsError] = useState('');
   const [selectedDealId, setSelectedDealId] = useState(null);
+  const [focusPosition, setFocusPosition] = useState(null);
 
   useEffect(() => {
     fetchDeals()
-      .then(setDeals)
+      .then((results) => {
+        setDeals(results);
+        setAllDeals(results);
+      })
       .catch(() => setDealsError('Could not load deals.'));
   }, []);
 
@@ -28,6 +36,28 @@ export default function Search() {
     fetchDeals(bounds)
       .then(setDeals)
       .catch(() => setDealsError('Could not load deals for this area.'));
+  }
+
+  // Distinct "City, ST" combos currently posted to, sorted alphabetically.
+  const availableCities = useMemo(() => {
+    const map = new Map();
+    allDeals.forEach((d) => {
+      if (!d.city) return;
+      const label = d.state ? `${d.city}, ${d.state}` : d.city;
+      if (!map.has(label)) map.set(label, { lat: d.latitude, lng: d.longitude });
+    });
+    return [...map.entries()]
+      .map(([label, position]) => ({ label, position }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [allDeals]);
+
+  function handleCitySelect(e) {
+    const label = e.target.value;
+    if (!label) return;
+    const city = availableCities.find((c) => c.label === label);
+    if (!city) return;
+    setDeals(allDeals); // reset to the full set in case a prior area-search narrowed it
+    setFocusPosition(city.position);
   }
 
   // "All" shows everything unfiltered. Otherwise only keep deals whose
@@ -50,9 +80,27 @@ export default function Search() {
       {view === 'map' && (
         <>
           <div className="px-4 py-3">
-            <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-4 py-3 text-brand-gray">
-              <SearchIcon size={18} />
-              <span className="text-sm">Search for Deals (coming soon)</span>
+            <div className="relative">
+              <MapPin
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
+              />
+              <select
+                onChange={handleCitySelect}
+                defaultValue=""
+                className="w-full appearance-none bg-slate-100 rounded-xl pl-11 pr-4 py-3 text-sm text-brand-navy cursor-pointer outline-none"
+              >
+                <option value="" disabled>
+                  {availableCities.length > 0
+                    ? 'Jump to a city with active deals'
+                    : 'No active cities yet'}
+                </option>
+                {availableCities.map((c) => (
+                  <option key={c.label} value={c.label}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -60,6 +108,7 @@ export default function Search() {
             <DealMap
               dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}
               onSearchArea={handleSearchArea}
+              focusPosition={focusPosition}
             >
               {visibleDeals.map((deal) => (
                 <Marker

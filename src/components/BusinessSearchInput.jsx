@@ -4,6 +4,15 @@ import { GOOGLE_MAPS_LIBRARIES } from '../utils/googleMapsLibraries';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+// Pulls a specific piece (city/state/zip) out of Google's structured
+// address_components array, since the formatted_address string alone
+// isn't reliably parseable.
+function getAddressComponent(components, type, useShortName = false) {
+  const match = components?.find((c) => c.types.includes(type));
+  if (!match) return null;
+  return useShortName ? match.short_name : match.long_name;
+}
+
 export default function BusinessSearchInput({ onSelect, selectedName }) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -17,10 +26,15 @@ export default function BusinessSearchInput({ onSelect, selectedName }) {
     const place = autocompleteRef.current?.getPlace();
     if (!place || !place.place_id || !place.geometry) return;
 
+    const components = place.address_components;
+
     onSelect({
       name: place.name,
       googlePlaceId: place.place_id,
       address: place.formatted_address ?? '',
+      city: getAddressComponent(components, 'locality'),
+      state: getAddressComponent(components, 'administrative_area_level_1', true),
+      zipCode: getAddressComponent(components, 'postal_code'),
       phone: place.formatted_phone_number ?? null,
       website: place.website ?? null,
       latitude: place.geometry.location.lat(),
