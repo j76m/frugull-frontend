@@ -209,7 +209,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         <button
           type="button"
           onClick={handleSearchArea}
-          className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-brand-link text-sm font-semibold cursor-pointer hover:bg-slate-50"
+          className="cursor-pointer absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-brand-link text-sm font-semibold hover:bg-slate-50"
         >
           <SearchIcon size={16} />
           Search this area
@@ -220,7 +220,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         type="button"
         onClick={centerOnMyLocation}
         aria-label="Center on my location"
-        className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-brand-navy"
+        className="cursor-pointer absolute bottom-4 right-4 w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-brand-navy"
       >
         <LocateFixed size={22} />
       </button>
