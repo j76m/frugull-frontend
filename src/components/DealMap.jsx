@@ -14,12 +14,14 @@ const containerStyle = {
 // (matches the reference screenshots from the old app).
 const DEFAULT_CENTER = { lat: 40.015, lng: -105.2705 };
 
-// Roughly 1 degree of lat/lng ≈ 60-70 miles at Colorado's latitude. Only
-// deals within this rough box count toward the very first auto-fit view.
-// After that, panning/zooming is entirely user-controlled via the
-// "Search this area" button, matching how Airbnb/Zillow-style maps work.
+// Roughly 1 degree of lat/lng ≈ 60-70 miles at Colorado's latitude — wide
+// enough to comfortably span neighboring towns (e.g. Longmont <-> Boulder,
+// ~25 miles apart). Deals within this box count toward "nearby" whenever
+// we locate the user, whether that's automatic on load or a manual tap
+// of the locate-me button — both do the exact same thing, consistently.
 const NEARBY_DEGREE_RADIUS = 1;
 const MAX_ZOOM_AFTER_FIT = 15;
+const FALLBACK_ZOOM = 12; // used only if there are no nearby deals to fit to
 
 // Muted, mostly-grayscale style matching the old app: hides Google's
 // default business/POI icons (Target, Costco, restaurants, etc.) and
@@ -43,6 +45,9 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
   });
 
   const mapRef = useRef(null);
+  const dealPointsRef = useRef(dealPoints);
+  dealPointsRef.current = dealPoints;
+
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [hasRealLocation, setHasRealLocation] = useState(false);
   const [showSearchArea, setShowSearchArea] = useState(false);
@@ -51,7 +56,6 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
   // code (geolocation centering, auto-fit) vs. an actual user drag/scroll.
   // Only real user movement should reveal the "Search this area" button.
   const isProgrammaticMove = useRef(false);
-  const hasAutoFitted = useRef(false);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
@@ -68,7 +72,12 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     mapRef.current = null;
   }, []);
 
-  function centerOnMyLocation(zoomIn = true) {
+  // The one consistent "locate me" behavior: center on the user's real
+  // location, then zoom out just enough to also show any deals nearby
+  // (within NEARBY_DEGREE_RADIUS). If there are none nearby, fall back to
+  // a plain city-level zoom. This runs identically whether triggered
+  // automatically on first load or by tapping the locate-me button.
+  function centerOnMyLocation() {
     if (!navigator.geolocation) return;
     isProgrammaticMove.current = true;
     navigator.geolocation.getCurrentPosition(
@@ -76,9 +85,31 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setCenter(next);
         setHasRealLocation(true);
-        mapRef.current?.panTo(next);
-        if (zoomIn) mapRef.current?.setZoom(14);
-        setTimeout(() => (isProgrammaticMove.current = false), 300);
+
+        if (!mapRef.current || !window.google) return;
+
+        const nearby = dealPointsRef.current.filter(
+          (p) =>
+            Math.abs(p.lat - next.lat) <= NEARBY_DEGREE_RADIUS &&
+            Math.abs(p.lng - next.lng) <= NEARBY_DEGREE_RADIUS
+        );
+
+        if (nearby.length > 0) {
+          const bounds = new window.google.maps.LatLngBounds();
+          bounds.extend(next);
+          nearby.forEach((p) => bounds.extend(p));
+          mapRef.current.fitBounds(bounds);
+          window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
+            if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
+              mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
+            }
+            setTimeout(() => (isProgrammaticMove.current = false), 300);
+          });
+        } else {
+          mapRef.current.panTo(next);
+          mapRef.current.setZoom(FALLBACK_ZOOM);
+          setTimeout(() => (isProgrammaticMove.current = false), 300);
+        }
       },
       () => {
         isProgrammaticMove.current = false;
@@ -87,40 +118,9 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
   }
 
   useEffect(() => {
-    if (isLoaded) centerOnMyLocation(false);
+    if (isLoaded) centerOnMyLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
-
-  // Only auto-fit to nearby deals ONCE, on first load. After that, the
-  // user is in control of the viewport via pan/zoom + Search this area.
-  const dealPointsKey = dealPoints.map((p) => `${p.lat},${p.lng}`).join('|');
-  useEffect(() => {
-    if (!hasRealLocation || !mapRef.current || !window.google || hasAutoFitted.current) return;
-
-    const nearby = dealPoints.filter(
-      (p) =>
-        Math.abs(p.lat - center.lat) <= NEARBY_DEGREE_RADIUS &&
-        Math.abs(p.lng - center.lng) <= NEARBY_DEGREE_RADIUS
-    );
-
-    if (nearby.length === 0) return;
-
-    hasAutoFitted.current = true;
-    isProgrammaticMove.current = true;
-
-    const bounds = new window.google.maps.LatLngBounds();
-    bounds.extend(center);
-    nearby.forEach((p) => bounds.extend(p));
-    mapRef.current.fitBounds(bounds);
-
-    window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
-      if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
-        mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
-      }
-      setTimeout(() => (isProgrammaticMove.current = false), 300);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRealLocation, dealPointsKey]);
 
   function handleSearchArea() {
     if (!mapRef.current) return;
@@ -218,7 +218,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
 
       <button
         type="button"
-        onClick={() => centerOnMyLocation(true)}
+        onClick={centerOnMyLocation}
         aria-label="Center on my location"
         className="absolute bottom-4 right-4 w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-brand-navy"
       >
