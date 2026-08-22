@@ -87,7 +87,7 @@ export default function Search() {
               />
               <select
                 onChange={handleCitySelect}
-                defaultValue=""
+                value=""
                 className="w-full appearance-none bg-slate-100 rounded-xl pl-11 pr-4 py-3 text-sm text-brand-navy cursor-pointer outline-none"
               >
                 <option value="" disabled>
