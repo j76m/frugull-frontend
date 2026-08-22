@@ -29,6 +29,19 @@ export default function Search() {
       .then((results) => {
         setDeals(results);
         setAllDeals(results);
+        // If we arrived via a shared link like /?deal=<id>, open that
+        // deal's modal automatically once the real data is loaded.
+        const dealIdFromUrl = new URLSearchParams(window.location.search).get('deal');
+        if (dealIdFromUrl) {
+          const found = results.find((d) => d.id === dealIdFromUrl);
+          if (found) {
+            setSelectedDealId(found.id);
+            setFocusPosition({ lat: found.latitude, lng: found.longitude });
+          }
+          // Clean the query param out of the URL so it doesn't re-trigger
+          // this on a later refresh once the deal has expired/changed.
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       })
       .catch(() => setDealsError('Could not load deals.'));
   }, []);

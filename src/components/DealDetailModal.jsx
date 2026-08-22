@@ -23,9 +23,29 @@ export default function DealDetailModal({ deal, onClose }) {
   const shareText = deal.business_name + ' — ' + deal.subcategory_name;
   const locationLine = [deal.city, deal.state].filter(Boolean).join(', ');
   const directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + deal.latitude + ',' + deal.longitude;
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   async function handleShare() {
-    if (navigator.share) {
+    // Try to hand off the actual photo file (not just a link) so apps
+    // like Instagram Stories on mobile can receive the real image
+    // directly from the native share sheet. If this fails for any
+    // reason, fall through to a plain URL share instead of doing nothing.
+    let sharedWithFile = false;
+    if (navigator.canShare && deal.image_url) {
+      try {
+        const response = await fetch(deal.image_url);
+        const blob = await response.blob();
+        const file = new File([blob], 'deal.jpg', { type: blob.type || 'image/jpeg' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: deal.business_name, text: shareText, files: [file] });
+          sharedWithFile = true;
+        }
+      } catch {
+        // Fall through to the URL-based share below.
+      }
+    }
+
+    if (!sharedWithFile && navigator.share) {
       try {
         await navigator.share({ title: deal.business_name, text: shareText, url: shareUrl });
       } catch {
@@ -116,26 +136,32 @@ export default function DealDetailModal({ deal, onClose }) {
           <div className="mt-5 border-t border-slate-100 pt-4">
             <p className="text-brand-navy font-medium text-sm mb-2">Share this deal</p>
             <div className="flex gap-2">
-              {typeof navigator !== 'undefined' && navigator.share && (
+              {canNativeShare && (
                 <button type="button" onClick={handleShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
                   <Share2 size={15} />
                   Share
                 </button>
               )}
-              <button type="button" onClick={handleFacebookShare} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
-                Facebook
-              </button>
-              <button type="button" onClick={handleEmailShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
-                <Mail size={15} />
-                Email
-              </button>
+              {!canNativeShare && (
+                <button type="button" onClick={handleFacebookShare} className="flex-1 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                  Facebook
+                </button>
+              )}
+              {!canNativeShare && (
+                <button type="button" onClick={handleEmailShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
+                  <Mail size={15} />
+                  Email
+                </button>
+              )}
               <button type="button" onClick={handleCopyLink} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
                 <Link2 size={15} />
                 {copied ? 'Copied!' : 'Copy Link'}
               </button>
             </div>
             <p className="text-brand-gray text-[11px] mt-2">
-              For Instagram: copy the link above, then paste it into your Story or DM.
+              {canNativeShare
+                ? 'Tap Share to send the photo directly to Instagram, Messages, and more.'
+                : 'For Instagram: copy the link above, then paste it into your Story or DM.'}
             </p>
           </div>
 

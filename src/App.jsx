@@ -15,14 +15,12 @@ export default function App() {
         <FilterProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Search />
-                </ProtectedRoute>
-              }
-            />
+            {/* Browsing is public — only posting (and your own profile)
+                requires an account. This matters directly for organic
+                growth: someone clicking a shared deal link should see the
+                actual deal, not a login wall. */}
+            <Route path="/" element={<Search />} />
+            <Route path="/filters" element={<Filters />} />
             <Route
               path="/create"
               element={
@@ -36,14 +34,6 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/filters"
-              element={
-                <ProtectedRoute>
-                  <Filters />
                 </ProtectedRoute>
               }
             />
