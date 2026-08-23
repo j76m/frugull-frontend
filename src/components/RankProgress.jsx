@@ -29,18 +29,24 @@ export default function RankProgress({ points }) {
         {TIERS.map((tier, i) => {
           const achieved = i <= currentIndex;
           const iconUrl = getRankIconUrl(tier.filename);
+          // The Frugull icon graphic is light-colored and hard to see on
+          // the default light gray "not yet achieved" background — give
+          // it a baby-blue backdrop always, regardless of achieved state.
+          const isFrugullTier = tier.key === 'frugull';
           return (
             <div key={tier.key} className="flex flex-col items-center gap-1 flex-1">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center border-2 ${
-                  achieved ? 'border-brand-link bg-white' : 'border-slate-200 bg-slate-100'
-                }`}
+                  achieved ? 'border-brand-link' : 'border-slate-200'
+                } ${isFrugullTier ? 'bg-sky-200' : achieved ? 'bg-white' : 'bg-slate-100'}`}
               >
                 {iconUrl ? (
                   <img
                     src={iconUrl}
                     alt={tier.label}
-                    className={`w-6 h-6 object-contain ${achieved ? '' : 'opacity-30 grayscale'}`}
+                    className={`w-6 h-6 object-contain ${
+                      achieved || isFrugullTier ? '' : 'opacity-30 grayscale'
+                    }`}
                   />
                 ) : (
                   <span className="text-[10px] text-brand-gray">{tier.label[0]}</span>
