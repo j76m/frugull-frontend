@@ -1,8 +1,30 @@
 import { TIERS } from '../data/ranks';
 import { getRankIconUrl } from '../utils/rankIcons';
 
+// Point gaps between tiers vary wildly (1pt, 9pts, 40pts, 200pts) — laying
+// icons out with equal spacing would misrepresent how much bigger the later
+// jumps really are. Using sqrt(gap) compresses that range into something
+// visually usable, and adding a small baseline before the sqrt keeps early
+// icons from crowding together on narrow (mobile) screens.
+const SPACING_BASELINE = 5;
+
+function getTierPositions() {
+  const positions = [0];
+  let cumulative = 0;
+  const scaledGaps = TIERS.slice(1).map(
+    (tier, i) => Math.sqrt(tier.threshold - TIERS[i].threshold + SPACING_BASELINE)
+  );
+  const total = scaledGaps.reduce((sum, g) => sum + g, 0);
+  scaledGaps.forEach((g) => {
+    cumulative += g;
+    positions.push((cumulative / total) * 100);
+  });
+  return positions;
+}
+
 export default function RankProgress({ points }) {
   const pts = points ?? 0;
+  const positions = getTierPositions();
 
   let currentIndex = 0;
   TIERS.forEach((tier, i) => {
@@ -21,24 +43,31 @@ export default function RankProgress({ points }) {
     remainingText = `${remaining} pt${remaining === 1 ? '' : 's'} to ${nextTier.label}`;
   }
 
-  const overallProgress = ((currentIndex + segmentProgress) / (TIERS.length - 1)) * 100;
+  const overallProgress = nextTier
+    ? positions[currentIndex] + segmentProgress * (positions[currentIndex + 1] - positions[currentIndex])
+    : 100;
 
   return (
     <div className="w-full">
-      <div className="flex items-start justify-between">
+      <div className="relative h-16 mx-4">
         {TIERS.map((tier, i) => {
           const achieved = i <= currentIndex;
           const iconUrl = getRankIconUrl(tier.filename);
-          // The Frugull icon graphic is light-colored and hard to see on
-          // the default light gray "not yet achieved" background — give
-          // it a baby-blue backdrop always, regardless of achieved state.
           const isFrugullTier = tier.key === 'frugull';
           return (
-            <div key={tier.key} className="flex flex-col items-center gap-1 flex-1">
+            <div
+              key={tier.key}
+              className="absolute top-0 flex flex-col items-center gap-1"
+              style={{ left: `${positions[i]}%`, transform: 'translateX(-50%)' }}
+            >
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center border-2 ${
-                  achieved ? 'border-brand-link' : 'border-slate-200'
-                } ${isFrugullTier ? 'bg-sky-200' : achieved ? 'bg-white' : 'bg-slate-100'}`}
+                  isFrugullTier
+                    ? 'bg-brand-link border-brand-link'
+                    : achieved
+                    ? 'bg-white border-brand-link'
+                    : 'bg-slate-100 border-slate-200'
+                }`}
               >
                 {iconUrl ? (
                   <img
@@ -53,7 +82,7 @@ export default function RankProgress({ points }) {
                 )}
               </div>
               <span
-                className={`text-[10px] text-center leading-tight ${
+                className={`text-[10px] text-center leading-tight whitespace-nowrap ${
                   achieved ? 'text-brand-navy font-medium' : 'text-brand-gray'
                 }`}
               >

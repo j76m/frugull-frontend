@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import Wordmark from './Wordmark';
-import taglineImg from '../assets/tagline.png';
 
 export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
   return (
@@ -14,9 +13,8 @@ export default function TopNav({ leftLabel, onLeft, rightLabel, onRight }) {
         >
           {leftLabel}
         </button>
-        <Link to="/" className="cursor-pointer flex flex-col items-center">
+        <Link to="/" className="cursor-pointer">
           <Wordmark className="h-10" />
-          <img src={taglineImg} alt="Local, Organized." className="h-2.5 mt-0.5" />
         </Link>
         <button
           onClick={onRight}
