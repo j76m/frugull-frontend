@@ -7,8 +7,10 @@ import SeagullMascot from '../components/SeagullMascot';
 import DealCard from '../components/DealCard';
 import DealMap from '../components/DealMap';
 import DealDetailModal from '../components/DealDetailModal';
+import MapLegend from '../components/MapLegend';
 import { fetchDeals } from '../api/deals';
 import { useFilters } from '../context/FilterContext';
+import { getCategoryColor } from '../data/categoryColors';
 import { MapPin } from 'lucide-react';
 
 export default function Search() {
@@ -82,6 +84,14 @@ export default function Search() {
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
+  // Distinct category names currently on the map — feeds the legend so it
+  // only ever shows colors that are actually in use right now.
+  const visibleCategories = useMemo(() => {
+    return [...new Set(visibleDeals.map((d) => d.category_name).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+  }, [visibleDeals]);
+
   return (
     <AppLayout>
       <TopNav
@@ -130,9 +140,19 @@ export default function Search() {
                   position={{ lat: deal.latitude, lng: deal.longitude }}
                   title={deal.business_name}
                   onClick={() => setSelectedDealId(deal.id)}
+                  icon={{
+                    path: window.google?.maps?.SymbolPath?.CIRCLE,
+                    scale: 9,
+                    fillColor: getCategoryColor(deal.category_name),
+                    fillOpacity: 1,
+                    strokeColor: '#FFFFFF',
+                    strokeWeight: 2,
+                  }}
                 />
               ))}
             </DealMap>
+
+            <MapLegend categories={visibleCategories} />
 
             {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center">
