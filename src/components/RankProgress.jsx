@@ -1,23 +1,25 @@
 import { TIERS } from '../data/ranks';
 import { getRankIconUrl } from '../utils/rankIcons';
 
-// Point gaps between tiers vary wildly (1pt, 9pts, 40pts, 200pts) — laying
-// icons out with equal spacing would misrepresent how much bigger the later
-// jumps really are. Using sqrt(gap) compresses that range into something
-// visually usable, and adding a small baseline before the sqrt keeps early
-// icons from crowding together on narrow (mobile) screens.
-const SPACING_BASELINE = 5;
+// Point gaps between tiers vary wildly (1pt, 9pts, 40pts, 200pts). Equal
+// spacing would misrepresent how much bigger the later jumps are — but
+// pure proportional spacing crowds the early icons (and their text labels)
+// together too tightly on narrow mobile screens. So every gap gets a
+// guaranteed minimum width, and only the space left over after that gets
+// distributed proportionally based on the real point gaps.
+const MIN_GAP_PERCENT = 16;
 
 function getTierPositions() {
+  const gaps = TIERS.slice(1).map((tier, i) => tier.threshold - TIERS[i].threshold);
+  const weights = gaps.map((g) => Math.sqrt(g));
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  const bonusPool = 100 - MIN_GAP_PERCENT * gaps.length;
+
   const positions = [0];
   let cumulative = 0;
-  const scaledGaps = TIERS.slice(1).map(
-    (tier, i) => Math.sqrt(tier.threshold - TIERS[i].threshold + SPACING_BASELINE)
-  );
-  const total = scaledGaps.reduce((sum, g) => sum + g, 0);
-  scaledGaps.forEach((g) => {
-    cumulative += g;
-    positions.push((cumulative / total) * 100);
+  weights.forEach((w) => {
+    cumulative += MIN_GAP_PERCENT + (w / totalWeight) * bonusPool;
+    positions.push(cumulative);
   });
   return positions;
 }
