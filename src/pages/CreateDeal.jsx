@@ -32,7 +32,20 @@ export default function CreateDeal() {
 
   useEffect(() => {
     fetchCategories()
-      .then(setCategories)
+      .then((results) => {
+        // Hidden for this phase of launch — not deleted from the database,
+        // just kept out of the picker while focus stays on categories that
+        // actually drive real deal volume. Easy to re-enable later by
+        // removing names from this list.
+        const HIDDEN_CATEGORIES = new Set([
+          'For Sale by Owner',
+          'Employment',
+          'Public Art',
+          'Property Rental',
+          'Home Care',
+        ]);
+        setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
+      })
       .catch(() => setCategoriesError('Could not load categories.'));
   }, []);
 

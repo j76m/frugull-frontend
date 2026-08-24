@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag } from 'lucide-react';
+import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart } from 'lucide-react';
 import { submitReport } from '../api/reports';
 
 const REPORT_REASONS = [
@@ -9,7 +9,7 @@ const REPORT_REASONS = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function DealDetailModal({ deal, onClose }) {
+export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }) {
   const [copied, setCopied] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0].value);
@@ -26,10 +26,6 @@ export default function DealDetailModal({ deal, onClose }) {
   const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   async function handleShare() {
-    // Try to hand off the actual photo file (not just a link) so apps
-    // like Instagram Stories on mobile can receive the real image
-    // directly from the native share sheet. If this fails for any
-    // reason, fall through to a plain URL share instead of doing nothing.
     let sharedWithFile = false;
     if (navigator.canShare && deal.image_url) {
       try {
@@ -97,14 +93,32 @@ export default function DealDetailModal({ deal, onClose }) {
             <button type="button" onClick={onClose} aria-label="Close" className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center cursor-pointer">
               <X size={18} className="text-brand-navy" />
             </button>
+            <button
+              type="button"
+              onClick={() => onToggleSave?.(deal)}
+              aria-label={isSaved ? 'Remove from saved' : 'Save this deal'}
+              className="absolute top-3 left-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center cursor-pointer"
+            >
+              <Heart size={18} className={isSaved ? 'text-red-500 fill-red-500' : 'text-brand-navy'} />
+            </button>
           </div>
         )}
 
         <div className="p-5">
           {!deal.image_url && (
-            <button type="button" onClick={onClose} aria-label="Close" className="float-right w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
-              <X size={18} className="text-brand-navy" />
-            </button>
+            <div className="flex justify-between mb-2">
+              <button
+                type="button"
+                onClick={() => onToggleSave?.(deal)}
+                aria-label={isSaved ? 'Remove from saved' : 'Save this deal'}
+                className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer"
+              >
+                <Heart size={18} className={isSaved ? 'text-red-500 fill-red-500' : 'text-brand-navy'} />
+              </button>
+              <button type="button" onClick={onClose} aria-label="Close" className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center cursor-pointer">
+                <X size={18} className="text-brand-navy" />
+              </button>
+            </div>
           )}
 
           <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>

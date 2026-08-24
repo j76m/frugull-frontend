@@ -9,30 +9,29 @@ import DealMap from '../components/DealMap';
 import DealDetailModal from '../components/DealDetailModal';
 import MapLegend from '../components/MapLegend';
 import { fetchDeals } from '../api/deals';
+import { fetchSavedDealIds, saveDeal, unsaveDeal } from '../api/savedDeals';
 import { useFilters } from '../context/FilterContext';
+import { useAuth } from '../context/AuthContext';
 import { getCategoryColor } from '../data/categoryColors';
 import { MapPin } from 'lucide-react';
 
 export default function Search() {
   const navigate = useNavigate();
+  const { status } = useAuth();
   const { allSelected, selectedSubs } = useFilters();
   const [view, setView] = useState('map'); // 'map' | 'list'
   const [deals, setDeals] = useState([]);
-  // Kept separate from `deals` (which narrows when "Search this area" is
-  // used) so the city dropdown always reflects everywhere with active
-  // deals, not just the currently visible map region.
   const [allDeals, setAllDeals] = useState([]);
   const [dealsError, setDealsError] = useState('');
   const [selectedDealId, setSelectedDealId] = useState(null);
   const [focusPosition, setFocusPosition] = useState(null);
+  const [savedDealIds, setSavedDealIds] = useState(new Set());
 
   useEffect(() => {
     fetchDeals()
       .then((results) => {
         setDeals(results);
         setAllDeals(results);
-        // If we arrived via a shared link like /?deal=<id>, open that
-        // deal's modal automatically once the real data is loaded.
         const dealIdFromUrl = new URLSearchParams(window.location.search).get('deal');
         if (dealIdFromUrl) {
           const found = results.find((d) => d.id === dealIdFromUrl);
@@ -40,13 +39,43 @@ export default function Search() {
             setSelectedDealId(found.id);
             setFocusPosition({ lat: found.latitude, lng: found.longitude });
           }
-          // Clean the query param out of the URL so it doesn't re-trigger
-          // this on a later refresh once the deal has expired/changed.
           window.history.replaceState({}, '', window.location.pathname);
         }
       })
       .catch(() => setDealsError('Could not load deals.'));
   }, []);
+
+  useEffect(() => {
+    if (status !== 'authed') return;
+    fetchSavedDealIds()
+      .then((ids) => setSavedDealIds(new Set(ids)))
+      .catch(() => {});
+  }, [status]);
+
+  async function handleToggleSave(deal) {
+    if (status !== 'authed') {
+      navigate('/login');
+      return;
+    }
+    const isSaved = savedDealIds.has(deal.id);
+    setSavedDealIds((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.delete(deal.id);
+      else next.add(deal.id);
+      return next;
+    });
+    try {
+      if (isSaved) await unsaveDeal(deal.id);
+      else await saveDeal(deal.id);
+    } catch {
+      setSavedDealIds((prev) => {
+        const next = new Set(prev);
+        if (isSaved) next.add(deal.id);
+        else next.delete(deal.id);
+        return next;
+      });
+    }
+  }
 
   function handleSearchArea(bounds) {
     fetchDeals(bounds)
@@ -54,7 +83,6 @@ export default function Search() {
       .catch(() => setDealsError('Could not load deals for this area.'));
   }
 
-  // Distinct "City, ST" combos currently posted to, sorted alphabetically.
   const availableCities = useMemo(() => {
     const map = new Map();
     allDeals.forEach((d) => {
@@ -72,20 +100,16 @@ export default function Search() {
     if (!label) return;
     const city = availableCities.find((c) => c.label === label);
     if (!city) return;
-    setDeals(allDeals); // reset to the full set in case a prior area-search narrowed it
+    setDeals(allDeals);
     setFocusPosition(city.position);
   }
 
-  // "All" shows everything unfiltered. Otherwise only keep deals whose
-  // subcategory is one of the ones checked on the Filter screen.
   const visibleDeals = allSelected
     ? deals
     : deals.filter((deal) => selectedSubs.has(deal.subcategory_name));
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
-  // Distinct category names currently on the map — feeds the legend so it
-  // only ever shows colors that are actually in use right now.
   const visibleCategories = useMemo(() => {
     return [...new Set(visibleDeals.map((d) => d.category_name).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
@@ -154,7 +178,6 @@ export default function Search() {
 
             <MapLegend categories={visibleCategories} />
 
-            {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center">
               <SeagullMascot
                 isOpen={!!selectedDeal}
@@ -194,7 +217,12 @@ export default function Search() {
         </div>
       )}
 
-      <DealDetailModal deal={selectedDeal} onClose={() => setSelectedDealId(null)} />
+      <DealDetailModal
+        deal={selectedDeal}
+        onClose={() => setSelectedDealId(null)}
+        isSaved={selectedDeal ? savedDealIds.has(selectedDeal.id) : false}
+        onToggleSave={handleToggleSave}
+      />
     </AppLayout>
   );
 }
