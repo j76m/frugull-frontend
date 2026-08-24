@@ -38,6 +38,7 @@ export default function Profile() {
   return (
     <AppLayout>
       <TopNav />
+
       <div className="max-w-sm mx-auto p-4 flex flex-col items-center text-center">
         <div className="w-full mb-6">
           <RankProgress points={user?.points_balance} />
@@ -55,40 +56,41 @@ export default function Profile() {
             </span>
           </div>
         </div>
+      </div>
 
-        <div className="w-full mt-6 pt-4 border-t border-slate-200">
-          <p className="text-brand-navy font-medium text-sm mb-3 text-left">Saved Deals</p>
+      <div className="mt-6 pt-4 border-t border-slate-200">
+        <p className="text-brand-navy font-medium text-sm px-4 mb-3">Saved Deals</p>
 
-          {savedError && <p className="text-red-500 text-sm">{savedError}</p>}
+        {savedError && <p className="text-red-500 text-sm px-4">{savedError}</p>}
 
-          {!savedError && savedDeals.length === 0 && (
-            <p className="text-brand-gray text-sm">
-              Nothing saved yet — tap the heart on any deal to keep it here.
-            </p>
-          )}
+        {!savedError && savedDeals.length === 0 && (
+          <p className="text-brand-gray text-sm px-4">
+            Nothing saved yet — tap the heart on any deal to keep it here.
+          </p>
+        )}
 
-          {savedDeals.length > 0 && (
-            <div className="grid grid-cols-2 gap-4">
-              {savedDeals.map((deal) => (
-                <DealCard
-                  key={deal.id}
-                  onClick={() => setSelectedDealId(deal.id)}
-                  deal={{
-                    id: deal.id,
-                    businessName: deal.business_name,
-                    subcategoryName: deal.subcategory_name,
-                    views: deal.view_count,
-                    imageUrl: deal.image_url,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {savedDeals.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
+            {savedDeals.map((deal) => (
+              <DealCard
+                key={deal.id}
+                onClick={() => setSelectedDealId(deal.id)}
+                deal={{
+                  id: deal.id,
+                  businessName: deal.business_name,
+                  subcategoryName: deal.subcategory_name,
+                  imageUrl: deal.image_url,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
+      <div className="max-w-sm mx-auto p-4">
         <button
           onClick={logout}
-          className="mt-6 w-full rounded-xl bg-slate-100 text-brand-navy font-medium py-3 cursor-pointer hover:bg-slate-200 transition-colors"
+          className="w-full rounded-xl bg-slate-100 text-brand-navy font-medium py-3 cursor-pointer hover:bg-slate-200 transition-colors"
         >
           Log out
         </button>

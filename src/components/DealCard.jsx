@@ -16,10 +16,7 @@ export default function DealCard({ deal, onClick }) {
       {deal.subcategoryName && (
         <p className="text-brand-link text-xs font-medium">{deal.subcategoryName}</p>
       )}
-      <div className="flex items-center gap-3 mt-1 text-xs">
-        {deal.distance && <span className="text-brand-gray">{deal.distance}</span>}
-        <span className="text-brand-link">{deal.views} Views</span>
-      </div>
+      {deal.distance && <p className="text-brand-gray text-xs mt-1">{deal.distance}</p>}
     </button>
   );
 }

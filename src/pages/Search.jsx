@@ -209,7 +209,6 @@ export default function Search() {
                 id: deal.id,
                 businessName: deal.business_name,
                 subcategoryName: deal.subcategory_name,
-                views: deal.view_count,
                 imageUrl: deal.image_url,
               }}
             />
