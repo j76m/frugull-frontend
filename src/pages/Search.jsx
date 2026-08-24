@@ -110,6 +110,13 @@ export default function Search() {
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
+  // A stable string that changes only when the actual filter selection
+  // changes — used to trigger the map's "re-fit to everything matching"
+  // behavior without re-triggering on every unrelated re-render.
+  const filterSignal = allSelected ? 'all' : [...selectedSubs].sort().join('|');
+
+  // Distinct category names currently on the map — feeds the legend so it
+  // only ever shows colors that are actually in use right now.
   const visibleCategories = useMemo(() => {
     return [...new Set(visibleDeals.map((d) => d.category_name).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
@@ -157,6 +164,7 @@ export default function Search() {
               dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}
               onSearchArea={handleSearchArea}
               focusPosition={focusPosition}
+              filterSignal={filterSignal}
             >
               {visibleDeals.map((deal) => (
                 <Marker

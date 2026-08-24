@@ -37,7 +37,7 @@ const MAP_STYLES = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dae1' }] },
 ];
 
-export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, children }) {
+export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, filterSignal, children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -52,9 +52,6 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
   const [hasRealLocation, setHasRealLocation] = useState(false);
   const [showSearchArea, setShowSearchArea] = useState(false);
 
-  // Tracks whether the map's current movement was triggered by our own
-  // code (geolocation centering, auto-fit) vs. an actual user drag/scroll.
-  // Only real user movement should reveal the "Search this area" button.
   const isProgrammaticMove = useRef(false);
 
   const onLoad = useCallback((map) => {
@@ -72,11 +69,6 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     mapRef.current = null;
   }, []);
 
-  // The one consistent "locate me" behavior: center on the user's real
-  // location, then zoom out just enough to also show any deals nearby
-  // (within NEARBY_DEGREE_RADIUS). If there are none nearby, fall back to
-  // a plain city-level zoom. This runs identically whether triggered
-  // automatically on first load or by tapping the locate-me button.
   function centerOnMyLocation() {
     if (!navigator.geolocation) return;
     isProgrammaticMove.current = true;
@@ -137,8 +129,6 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     setShowSearchArea(false);
   }
 
-  // Jump the map to a specific point (e.g. picking a city from the
-  // dropdown) without treating it as a user-initiated pan.
   useEffect(() => {
     if (!focusPosition || !mapRef.current) return;
     isProgrammaticMove.current = true;
@@ -147,6 +137,35 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     setShowSearchArea(false);
     setTimeout(() => (isProgrammaticMove.current = false), 300);
   }, [focusPosition]);
+
+  // Whenever the active category filter changes, re-fit the map to show
+  // EVERY currently matching deal — no distance cap. The nearby-radius cap
+  // only makes sense for "browse everything" (so we don't zoom out to the
+  // whole country as the app grows); once someone has deliberately picked
+  // a specific filter, they've asked a targeted question and deserve the
+  // complete answer, whether that match is two blocks or two states away.
+  const isFirstFilterRun = useRef(true);
+  useEffect(() => {
+    if (isFirstFilterRun.current) {
+      isFirstFilterRun.current = false;
+      return;
+    }
+    if (!mapRef.current || !window.google || dealPoints.length === 0) return;
+
+    isProgrammaticMove.current = true;
+    const bounds = new window.google.maps.LatLngBounds();
+    dealPoints.forEach((p) => bounds.extend(p));
+    if (hasRealLocation) bounds.extend(center);
+    mapRef.current.fitBounds(bounds);
+    window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
+      if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
+        mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
+      }
+      setTimeout(() => (isProgrammaticMove.current = false), 300);
+    });
+    setShowSearchArea(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterSignal]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
@@ -195,9 +214,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         {hasRealLocation && (
           <OverlayView position={center} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
             <div className="relative w-4 h-4 -translate-x-1/2 -translate-y-1/2">
-              {/* Pulsing halo, matching the old app's animated blue dot */}
               <span className="absolute inset-0 rounded-full bg-brand-link opacity-60 animate-ping" />
-              {/* Solid center dot */}
               <span className="absolute inset-0 rounded-full bg-brand-link border-2 border-white shadow" />
             </div>
           </OverlayView>
