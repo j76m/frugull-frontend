@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Marker } from '@react-google-maps/api';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
@@ -19,7 +19,18 @@ export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
   const { allSelected, selectedSubs } = useFilters();
-  const [view, setView] = useState('map'); // 'map' | 'list'
+  // Stored in the URL (not plain local state) so it survives navigating
+  // to Filters and back — that round trip fully remounts this page, which
+  // would otherwise silently reset the toggle back to Map every time.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get('view') === 'list' ? 'list' : 'map';
+  function setView(next) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set('view', next);
+      return params;
+    });
+  }
   const [deals, setDeals] = useState([]);
   const [allDeals, setAllDeals] = useState([]);
   const [dealsError, setDealsError] = useState('');
@@ -129,7 +140,7 @@ export default function Search() {
         leftLabel="Filter"
         onLeft={() => navigate('/filters')}
         rightLabel={view === 'map' ? 'List' : 'Map'}
-        onRight={() => setView((v) => (v === 'map' ? 'list' : 'map'))}
+        onRight={() => setView(view === 'map' ? 'list' : 'map')}
       />
 
       {view === 'map' && (

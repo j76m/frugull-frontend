@@ -14,14 +14,8 @@ const containerStyle = {
 // (matches the reference screenshots from the old app).
 const DEFAULT_CENTER = { lat: 40.015, lng: -105.2705 };
 
-// Roughly 1 degree of lat/lng ≈ 60-70 miles at Colorado's latitude — wide
-// enough to comfortably span neighboring towns (e.g. Longmont <-> Boulder,
-// ~25 miles apart). Deals within this box count toward "nearby" whenever
-// we locate the user, whether that's automatic on load or a manual tap
-// of the locate-me button — both do the exact same thing, consistently.
-const NEARBY_DEGREE_RADIUS = 1;
 const MAX_ZOOM_AFTER_FIT = 15;
-const FALLBACK_ZOOM = 12; // used only if there are no nearby deals to fit to
+const FALLBACK_ZOOM = 12; // used only when there are zero matching deals at all
 
 // Muted, mostly-grayscale style matching the old app: hides Google's
 // default business/POI icons (Target, Costco, restaurants, etc.) and
@@ -45,8 +39,6 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
   });
 
   const mapRef = useRef(null);
-  const dealPointsRef = useRef(dealPoints);
-  dealPointsRef.current = dealPoints;
 
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [hasRealLocation, setHasRealLocation] = useState(false);
@@ -77,31 +69,9 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setCenter(next);
         setHasRealLocation(true);
-
-        if (!mapRef.current || !window.google) return;
-
-        const nearby = dealPointsRef.current.filter(
-          (p) =>
-            Math.abs(p.lat - next.lat) <= NEARBY_DEGREE_RADIUS &&
-            Math.abs(p.lng - next.lng) <= NEARBY_DEGREE_RADIUS
-        );
-
-        if (nearby.length > 0) {
-          const bounds = new window.google.maps.LatLngBounds();
-          bounds.extend(next);
-          nearby.forEach((p) => bounds.extend(p));
-          mapRef.current.fitBounds(bounds);
-          window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
-            if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
-              mapRef.current.setZoom(MAX_ZOOM_AFTER_FIT);
-            }
-            setTimeout(() => (isProgrammaticMove.current = false), 300);
-          });
-        } else {
-          mapRef.current.panTo(next);
-          mapRef.current.setZoom(FALLBACK_ZOOM);
-          setTimeout(() => (isProgrammaticMove.current = false), 300);
-        }
+        mapRef.current?.panTo(next);
+        mapRef.current?.setZoom(14);
+        setTimeout(() => (isProgrammaticMove.current = false), 300);
       },
       () => {
         isProgrammaticMove.current = false;
@@ -138,24 +108,32 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     setTimeout(() => (isProgrammaticMove.current = false), 300);
   }, [focusPosition]);
 
-  // Whenever the active category filter changes, re-fit the map to show
-  // EVERY currently matching deal — no distance cap. The nearby-radius cap
-  // only makes sense for "browse everything" (so we don't zoom out to the
-  // whole country as the app grows); once someone has deliberately picked
-  // a specific filter, they've asked a targeted question and deserve the
-  // complete answer, whether that match is two blocks or two states away.
-  const isFirstFilterRun = useRef(true);
+  // The core "what should the map be showing" logic, kept reactive rather
+  // than a one-time effect — this is what makes it correctly handle both
+  // the very first load AND navigating to Filters and back (which fully
+  // remounts this component, so any "only run once" guard would silently
+  // never fire on that return trip).
+  //
+  // For now this always fits to EVERY currently matching deal, with no
+  // distance cap — given how few deals exist at this stage, showing
+  // nothing nearby would look broken. Once real deal density grows large
+  // enough that this would zoom out to the whole country, this should be
+  // revisited (e.g. reintroducing a "search this area" first-load flow).
   useEffect(() => {
-    if (isFirstFilterRun.current) {
-      isFirstFilterRun.current = false;
-      return;
-    }
-    if (!mapRef.current || !window.google || dealPoints.length === 0) return;
+    if (!mapRef.current || !window.google || !hasRealLocation) return;
 
     isProgrammaticMove.current = true;
+
+    if (dealPoints.length === 0) {
+      mapRef.current.panTo(center);
+      mapRef.current.setZoom(FALLBACK_ZOOM);
+      setTimeout(() => (isProgrammaticMove.current = false), 300);
+      return;
+    }
+
     const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend(center);
     dealPoints.forEach((p) => bounds.extend(p));
-    if (hasRealLocation) bounds.extend(center);
     mapRef.current.fitBounds(bounds);
     window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
       if (mapRef.current.getZoom() > MAX_ZOOM_AFTER_FIT) {
@@ -165,7 +143,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     });
     setShowSearchArea(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterSignal]);
+  }, [hasRealLocation, filterSignal, dealPoints.length]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
