@@ -56,7 +56,7 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-2">
-          <img src={fullLogoImg} alt="Frugull — Your local deal finder" className="h-28 mx-auto" />
+          <img src={fullLogoImg} alt="Frugull — Your local deal finder" className="h-96 mx-auto" />
         </div>
 
         {step === 'email' && (
