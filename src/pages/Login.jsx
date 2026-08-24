@@ -59,7 +59,7 @@ export default function Login() {
           <img
             src={fullLogoImg}
             alt="Frugull — Your local deal finder"
-            className="h-32 w-auto object-contain mx-auto"
+            className="h-64 w-auto object-contain mx-auto"
           />
         </div>
 
