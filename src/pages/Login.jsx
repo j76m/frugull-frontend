@@ -58,7 +58,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-2">
           <Wordmark className="h-24 mx-auto" />
-          <img src={taglineImg} alt="Your local deal finder" className="h-9 mx-auto mt-2" />
+          <img src={taglineImg} alt="Your local deal finder" className="h-16 mx-auto mt-2" />
         </div>
 
         {step === 'email' && (
