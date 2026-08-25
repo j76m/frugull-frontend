@@ -2,11 +2,13 @@
 // in sync with the category names in src/data/categories.js and whatever
 // the backend's categories table actually contains.
 //
-// The 6 currently-active categories (the ones not hidden from the Post
-// screen) use the 3 primary colors plus their 3 blends — this spaces them
-// evenly around the whole color wheel instead of clustering in one
-// temperature zone, which is what was happening before (several warm
-// tones that looked too similar as small map dots).
+// The 6 original active categories use the 3 primary colors plus their 3
+// blends — evenly spaced around the whole color wheel instead of
+// clustering in one temperature zone. Dispensary uses black instead of a
+// 7th hue: any new color has to sit near one of the existing six on the
+// wheel, but black stands apart on lightness/contrast instead, so it
+// reads as unmistakably different rather than "close to but different
+// from" everything else.
 const CATEGORY_COLORS = {
   Food: '#22c55e', // green
   Beverages: '#3b82f6', // blue
@@ -14,6 +16,7 @@ const CATEGORY_COLORS = {
   'Auto Care': '#ef4444', // red
   Recreation: '#f97316', // orange
   Retail: '#eab308', // yellow
+  Dispensary: '#111827', // near-black
 
   // Hidden from Post for now — kept distinct in case these categories
   // ever get re-enabled, but not a priority to perfectly harmonize since

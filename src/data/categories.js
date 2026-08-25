@@ -14,6 +14,7 @@ const CATEGORIES = [
   { name: 'Employment', subcategories: ['Full-time', 'Part-time', 'Gig/Freelance'] },
   { name: 'Property Rental', subcategories: ['Apartments', 'Rooms', 'Commercial'] },
   { name: 'Retail', subcategories: ['Auto Products', 'Beauty Products', 'Clothing', 'Electronics', 'Grocery', 'Home Goods', 'Home Improvement', 'Other'] },
+  { name: 'Dispensary', subcategories: ['Recreational', 'Medical'] },
 ];
 
 export default CATEGORIES;
