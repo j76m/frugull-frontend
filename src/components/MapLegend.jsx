@@ -12,7 +12,7 @@ export default function MapLegend({ categories }) {
       {categories.map((cat) => (
         <div
           key={cat}
-          className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1.5"
+          className="flex items-center gap-1.5 border border-brand-link rounded-full px-3 py-1.5"
         >
           <span
             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
