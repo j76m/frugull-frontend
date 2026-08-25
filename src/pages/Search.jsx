@@ -195,8 +195,7 @@ export default function Search() {
               ))}
             </DealMap>
 
-            <MapLegend categories={visibleCategories} />
-
+            {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center">
               <SeagullMascot
                 isOpen={!!selectedDeal}
@@ -205,6 +204,9 @@ export default function Search() {
               />
             </div>
           </div>
+
+          <MapLegend categories={visibleCategories} />
+
           {dealsError && <p className="text-red-500 text-sm text-center mt-2">{dealsError}</p>}
         </>
       )}

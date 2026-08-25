@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import * as authApi from '../api/auth';
-import fullLogoImg from '../assets/frugull-tagline.png';
+import Wordmark from '../components/Wordmark';
+import taglineImg from '../assets/tagline.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -56,11 +57,8 @@ export default function Login() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-2">
-          <img
-            src={fullLogoImg}
-            alt="Frugull — Your local deal finder"
-            className="h-32 w-auto object-contain mx-auto"
-          />
+          <Wordmark className="h-24 mx-auto" />
+          <img src={taglineImg} alt="Your local deal finder" className="h-9 mx-auto mt-2" />
         </div>
 
         {step === 'email' && (
