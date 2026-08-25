@@ -4,7 +4,7 @@
 // with the database instead of two sources of truth.
 const CATEGORIES = [
   { name: 'Food', subcategories: ['Sushi', 'Pizza', 'BBQ', 'Burgers', 'Mexican', 'Asian', 'Italian', 'Bakery', 'Breakfast/Brunch', 'Food Truck', 'Vegan/Vegetarian', 'Dessert/Ice Cream'] },
-  { name: 'Drink', subcategories: ['Beer', 'Cocktails', 'Wine', 'Coffee', 'Boba/Tea', 'Happy Hour'] },
+  { name: 'Beverages', subcategories: ['Beer', 'Cocktails', 'Wine', 'Coffee', 'Boba/Tea', 'Happy Hour'] },
   { name: 'Personal Care', subcategories: ['Hair Cuts', 'Nails', 'Spa/Massage', 'Skincare', 'Barber', 'Gym/Fitness', 'Yoga'] },
   { name: 'Auto Care', subcategories: ['Oil Change', 'Brakes', 'Tires', 'Car Wash', 'Detailing'] },
   { name: 'Home Care', subcategories: ['Cleaning', 'Landscaping', 'HVAC', 'Plumbing', 'Pest Control'] },

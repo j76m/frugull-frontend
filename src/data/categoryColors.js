@@ -3,7 +3,7 @@
 // the backend's categories table actually contains.
 const CATEGORY_COLORS = {
   Food: '#22c55e', // green
-  Drink: '#ef4444', // red
+  Beverages: '#ef4444', // red
   'Personal Care': '#eab308', // yellow
   'Auto Care': '#1f2937', // black
   'Home Care': '#78350f', // brown
