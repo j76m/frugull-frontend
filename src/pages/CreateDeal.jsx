@@ -11,6 +11,14 @@ import { createDeal } from '../api/deals';
 import { fetchMe } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
+const DISCOUNT_TAGS = [
+  { value: 'college', label: 'College' },
+  { value: 'teacher', label: 'Teacher' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'military', label: 'Military' },
+  { value: 'first_responder', label: 'First Responder' },
+];
+
 export default function CreateDeal() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
@@ -25,6 +33,7 @@ export default function CreateDeal() {
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
   const [caption, setCaption] = useState('');
+  const [discountTags, setDiscountTags] = useState([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -63,6 +72,12 @@ export default function CreateDeal() {
     setSubcategoryId(''); // reset subcategory whenever the category changes
   }
 
+  function toggleDiscountTag(value) {
+    setDiscountTags((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
+    );
+  }
+
   const canSubmit =
     photoFile && business && categoryId && subcategoryId && caption.trim().length > 0 && !submitting;
 
@@ -88,6 +103,7 @@ export default function CreateDeal() {
         subcategoryId: Number(subcategoryId),
         caption: caption.trim(),
         imageUrl: publicUrl,
+        discountTags: discountTags.length > 0 ? discountTags : undefined,
       });
 
       // Points were just awarded server-side — reflect that in the
@@ -196,6 +212,29 @@ export default function CreateDeal() {
             placeholder="What's the deal?"
             className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link resize-none"
           />
+        </div>
+
+        {/* Discount tags */}
+        <div>
+          <label className="block text-sm text-slate-600 mb-2">
+            Discounts offered <span className="text-brand-gray">(optional)</span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {DISCOUNT_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                type="button"
+                onClick={() => toggleDiscountTag(tag.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
+                  discountTags.includes(tag.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-slate-200'
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
