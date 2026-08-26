@@ -219,16 +219,16 @@ export default function CreateDeal() {
           <label className="block text-sm text-slate-600 mb-2">
             Discounts offered <span className="text-brand-gray">(optional)</span>
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             {DISCOUNT_TAGS.map((tag) => (
               <button
                 key={tag.value}
                 type="button"
                 onClick={() => toggleDiscountTag(tag.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                   discountTags.includes(tag.value)
                     ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-slate-200'
+                    : 'bg-white text-brand-navy border-brand-link'
                 }`}
               >
                 {tag.label}
