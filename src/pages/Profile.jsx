@@ -4,6 +4,7 @@ import TopNav from '../components/TopNav';
 import RankProgress from '../components/RankProgress';
 import DealCard from '../components/DealCard';
 import DealDetailModal from '../components/DealDetailModal';
+import MembershipSection from '../components/MembershipSection';
 import { useAuth } from '../context/AuthContext';
 import { TIERS } from '../data/ranks';
 import { getRankIconUrl } from '../utils/rankIcons';
@@ -57,6 +58,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <MembershipSection />
 
       <div className="mt-6 pt-4 border-t border-slate-200">
         <p className="text-brand-navy font-medium text-sm px-4 mb-3">Saved Deals</p>
