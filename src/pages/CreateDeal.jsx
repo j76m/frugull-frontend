@@ -9,6 +9,7 @@ import { findOrCreateBusiness } from '../api/businesses';
 import { getUploadUrl, uploadFileToS3 } from '../api/upload';
 import { createDeal } from '../api/deals';
 import { fetchMe } from '../api/auth';
+import { fetchSubscriptionStatus } from '../api/subscriptions';
 import { useAuth } from '../context/AuthContext';
 
 const DISCOUNT_TAGS = [
@@ -19,6 +20,17 @@ const DISCOUNT_TAGS = [
   { value: 'first_responder', label: 'First Responder' },
 ];
 
+// Matches JS Date.getDay() convention: 0 = Sunday ... 6 = Saturday.
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+];
+
 export default function CreateDeal() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
@@ -26,6 +38,7 @@ export default function CreateDeal() {
 
   const [categories, setCategories] = useState([]);
   const [categoriesError, setCategoriesError] = useState('');
+  const [isUnlimited, setIsUnlimited] = useState(false);
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
@@ -34,6 +47,7 @@ export default function CreateDeal() {
   const [subcategoryId, setSubcategoryId] = useState('');
   const [caption, setCaption] = useState('');
   const [discountTags, setDiscountTags] = useState([]);
+  const [validDays, setValidDays] = useState([]); // empty array = "Any"
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -56,6 +70,10 @@ export default function CreateDeal() {
         setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
       })
       .catch(() => setCategoriesError('Could not load categories.'));
+
+    fetchSubscriptionStatus()
+      .then((sub) => setIsUnlimited(sub.plan === 'unlimited'))
+      .catch(() => setIsUnlimited(false));
   }, []);
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
@@ -75,6 +93,12 @@ export default function CreateDeal() {
   function toggleDiscountTag(value) {
     setDiscountTags((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
+    );
+  }
+
+  function toggleDay(value) {
+    setValidDays((prev) =>
+      prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value]
     );
   }
 
@@ -104,6 +128,8 @@ export default function CreateDeal() {
         caption: caption.trim(),
         imageUrl: publicUrl,
         discountTags: discountTags.length > 0 ? discountTags : undefined,
+        validDaysOfWeek:
+          isUnlimited && validDays.length > 0 ? validDays : undefined,
       });
 
       // Points were just awarded server-side — reflect that in the
@@ -235,6 +261,49 @@ export default function CreateDeal() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Valid days of week - Unlimited only, grayed out otherwise as an upsell */}
+        <div>
+          <label className="block text-sm text-slate-600 mb-2">
+            Valid days <span className="text-brand-gray">(optional)</span>
+          </label>
+          <div
+            className={`flex flex-wrap justify-center gap-2 ${
+              !isUnlimited ? 'opacity-40 pointer-events-none' : ''
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setValidDays([])}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                validDays.length === 0
+                  ? 'bg-brand-navy text-white border-brand-navy'
+                  : 'bg-white text-brand-navy border-brand-link'
+              }`}
+            >
+              Any
+            </button>
+            {DAYS_OF_WEEK.map((day) => (
+              <button
+                key={day.value}
+                type="button"
+                onClick={() => toggleDay(day.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  validDays.includes(day.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {day.label}
+              </button>
+            ))}
+          </div>
+          {!isUnlimited && (
+            <p className="text-brand-gray text-xs text-center mt-2">
+              Upgrade to Frugull Unlimited to schedule specific days.
+            </p>
+          )}
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
