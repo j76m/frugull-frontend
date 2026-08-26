@@ -168,8 +168,8 @@ export default function Search() {
 
       {view === 'map' && (
         <>
-          <div className="px-4 py-3 space-y-2">
-            <div className="relative">
+          <div className="px-4 py-3 flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[180px]">
               <MapPin
                 size={18}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
@@ -192,16 +192,16 @@ export default function Search() {
               </select>
             </div>
 
-            <div className="flex rounded-xl border-2 border-brand-navy overflow-hidden">
+            <div className="flex gap-1.5 flex-shrink-0">
               {POST_TYPE_OPTIONS.map((opt) => (
                 <button
                   key={opt.label}
                   type="button"
                   onClick={() => setPostTypeFilter(opt.value)}
-                  className={`flex-1 py-2 text-sm font-semibold ${
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
                     postTypeFilter === opt.value
-                      ? 'bg-brand-navy text-white'
-                      : 'bg-white text-brand-navy'
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-link border-slate-200'
                   }`}
                 >
                   {opt.label}
