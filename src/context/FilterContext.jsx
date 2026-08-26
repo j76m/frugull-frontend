@@ -5,10 +5,12 @@ const FilterContext = createContext(null);
 export function FilterProvider({ children }) {
   const [allSelected, setAllSelected] = useState(true);
   const [selectedSubs, setSelectedSubs] = useState(new Set());
+  const [selectedDiscountTags, setSelectedDiscountTags] = useState(new Set());
 
   function clearSelections() {
     setAllSelected(true);
     setSelectedSubs(new Set());
+    setSelectedDiscountTags(new Set());
   }
 
   function toggleAll() {
@@ -31,7 +33,27 @@ export function FilterProvider({ children }) {
     });
   }
 
-  const value = { allSelected, selectedSubs, toggleAll, toggleSub, clearSelections };
+  // Discount tags are an independent filter layer, not tied to allSelected -
+  // an empty set here just means "don't filter by discount," regardless of
+  // whether a category/subcategory filter is also active.
+  function toggleDiscountTag(tag) {
+    setSelectedDiscountTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  }
+
+  const value = {
+    allSelected,
+    selectedSubs,
+    selectedDiscountTags,
+    toggleAll,
+    toggleSub,
+    toggleDiscountTag,
+    clearSelections,
+  };
 
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }

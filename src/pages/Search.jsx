@@ -18,7 +18,7 @@ import { MapPin } from 'lucide-react';
 export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
-  const { allSelected, selectedSubs } = useFilters();
+  const { allSelected, selectedSubs, selectedDiscountTags } = useFilters();
   // Stored in the URL (not plain local state) so it survives navigating
   // to Filters and back — that round trip fully remounts this page, which
   // would otherwise silently reset the toggle back to Map every time.
@@ -115,9 +115,11 @@ export default function Search() {
     setFocusPosition(city.position);
   }
 
-  const visibleDeals = allSelected
-    ? deals
-    : deals.filter((deal) => selectedSubs.has(deal.subcategory_name));
+  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_name))).filter(
+    (deal) =>
+      selectedDiscountTags.size === 0 ||
+      (deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
+  );
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 

@@ -6,9 +6,25 @@ import CATEGORIES from '../data/categories';
 import { fetchDeals } from '../api/deals';
 import { useFilters } from '../context/FilterContext';
 
+const DISCOUNT_TAGS = [
+  { value: 'college', label: 'College' },
+  { value: 'teacher', label: 'Teacher' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'military', label: 'Military' },
+  { value: 'first_responder', label: 'First Responder' },
+];
+
 export default function Filters() {
   const navigate = useNavigate();
-  const { allSelected, selectedSubs, toggleAll, toggleSub, clearSelections } = useFilters();
+  const {
+    allSelected,
+    selectedSubs,
+    selectedDiscountTags,
+    toggleAll,
+    toggleSub,
+    toggleDiscountTag,
+    clearSelections,
+  } = useFilters();
   const [deals, setDeals] = useState(null); // null = still loading
   const [loadError, setLoadError] = useState('');
 
@@ -79,6 +95,27 @@ export default function Filters() {
           >
             Clear Selections
           </button>
+        </div>
+
+        {/* Discount tags */}
+        <div className="pb-4 mb-4 border-b border-slate-200">
+          <p className="text-brand-navy font-medium text-sm mb-2">Discounts offered</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {DISCOUNT_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                type="button"
+                onClick={() => toggleDiscountTag(tag.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  selectedDiscountTags.has(tag.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <label className="flex items-center gap-2 py-3 border-b border-slate-200 cursor-pointer">
