@@ -15,6 +15,12 @@ import { useAuth } from '../context/AuthContext';
 import { getCategoryColor } from '../data/categoryColors';
 import { MapPin } from 'lucide-react';
 
+const POST_TYPE_OPTIONS = [
+  { value: null, label: 'All' },
+  { value: 'deal', label: 'Deals' },
+  { value: 'info', label: 'Info' },
+];
+
 export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
@@ -37,6 +43,8 @@ export default function Search() {
   const [selectedDealId, setSelectedDealId] = useState(null);
   const [focusPosition, setFocusPosition] = useState(null);
   const [savedDealIds, setSavedDealIds] = useState(new Set());
+  // null = All, 'deal' = Deals only, 'info' = General Info only.
+  const [postTypeFilter, setPostTypeFilter] = useState(null);
 
   useEffect(() => {
     fetchDeals()
@@ -131,7 +139,8 @@ export default function Search() {
       // search and defeat the point of filtering by day.
       if (!deal.valid_days_of_week || deal.valid_days_of_week.length === 0) return false;
       return deal.valid_days_of_week.some((day) => selectedDays.has(day));
-    });
+    })
+    .filter((deal) => postTypeFilter === null || deal.post_type === postTypeFilter);
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
@@ -159,7 +168,7 @@ export default function Search() {
 
       {view === 'map' && (
         <>
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 space-y-2">
             <div className="relative">
               <MapPin
                 size={18}
@@ -181,6 +190,23 @@ export default function Search() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex rounded-xl border-2 border-brand-navy overflow-hidden">
+              {POST_TYPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setPostTypeFilter(opt.value)}
+                  className={`flex-1 py-2 text-sm font-semibold ${
+                    postTypeFilter === opt.value
+                      ? 'bg-brand-navy text-white'
+                      : 'bg-white text-brand-navy'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
