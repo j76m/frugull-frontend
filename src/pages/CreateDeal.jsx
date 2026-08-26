@@ -48,6 +48,7 @@ export default function CreateDeal() {
   const [caption, setCaption] = useState('');
   const [discountTags, setDiscountTags] = useState([]);
   const [validDays, setValidDays] = useState([]); // empty array = "Any"
+  const [postType, setPostType] = useState('deal');
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -130,6 +131,7 @@ export default function CreateDeal() {
         discountTags: discountTags.length > 0 ? discountTags : undefined,
         validDaysOfWeek:
           isUnlimited && validDays.length > 0 ? validDays : undefined,
+        postType,
       });
 
       // Points were just awarded server-side — reflect that in the
@@ -156,6 +158,35 @@ export default function CreateDeal() {
     <AppLayout>
       <TopNav leftLabel="Cancel" onLeft={() => navigate(-1)} />
       <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-5">
+        {/* Post type toggle */}
+        <div>
+          <div className="flex rounded-xl border-2 border-brand-navy overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPostType('deal')}
+              className={`flex-1 py-2.5 text-sm font-semibold ${
+                postType === 'deal' ? 'bg-brand-navy text-white' : 'bg-white text-brand-navy'
+              }`}
+            >
+              Deal / Special
+            </button>
+            <button
+              type="button"
+              onClick={() => setPostType('info')}
+              className={`flex-1 py-2.5 text-sm font-semibold ${
+                postType === 'info' ? 'bg-brand-navy text-white' : 'bg-white text-brand-navy'
+              }`}
+            >
+              General Info
+            </button>
+          </div>
+          <p className="text-brand-gray text-xs text-center mt-1.5">
+            {postType === 'deal'
+              ? "A discount, special, or limited-time offer."
+              : "A menu, hours, or other info that isn't a discount."}
+          </p>
+        </div>
+
         {/* Photo capture */}
         <div>
           <input
@@ -307,14 +338,14 @@ export default function CreateDeal() {
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
-        {success && <p className="text-green-600 text-sm text-center">Deal posted!</p>}
+        {success && <p className="text-green-600 text-sm text-center">Posted!</p>}
 
         <button
           type="submit"
           disabled={!canSubmit}
           className="w-full rounded-xl bg-brand-link text-white font-semibold py-3 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
         >
-          {submitting ? 'Posting...' : 'Post Deal'}
+          {submitting ? 'Posting...' : postType === 'info' ? 'Post Info' : 'Post Deal'}
         </button>
       </form>
     </AppLayout>

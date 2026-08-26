@@ -2,10 +2,11 @@ import client from './client';
 
 // businessId, categoryId, subcategoryId, caption, imageUrl are required.
 // requestedDurationDays and validDaysOfWeek are Pro/Credit-tier fields —
-// safe to omit for Free tier, which gets the fixed 7-day expiration
-// automatically regardless of what's sent.
+// safe to omit for Free tier, which gets the fixed duration automatically
+// regardless of what's sent (7 days for a Deal, 30 for General Info).
 // discountTags is optional for any tier: array of 'college' | 'teacher' |
 // 'senior' | 'military' | 'first_responder'.
+// postType is 'deal' (default) or 'info'.
 export async function createDeal({
   businessId,
   categoryId,
@@ -15,6 +16,7 @@ export async function createDeal({
   requestedDurationDays,
   validDaysOfWeek,
   discountTags,
+  postType,
 }) {
   const { data } = await client.post('/deals', {
     businessId,
@@ -25,6 +27,7 @@ export async function createDeal({
     requestedDurationDays,
     validDaysOfWeek,
     discountTags,
+    postType,
   });
   return data.deal ?? data;
 }
@@ -36,12 +39,17 @@ export async function createDeal({
 // instead of always fetching every active deal in the database.
 // Optional discountTags = array of tag strings - only deals matching at
 // least one of the given tags are returned.
-export async function fetchDeals(bounds, discountTags) {
+// Optional postType = 'deal' | 'info' - only deals of that exact type are
+// returned; omit to get both (used by the map's All/Deals/Info toggle).
+export async function fetchDeals(bounds, discountTags, postType) {
   const params = bounds
     ? { north: bounds.north, south: bounds.south, east: bounds.east, west: bounds.west }
     : {};
   if (discountTags && discountTags.length > 0) {
     params.discountTags = discountTags.join(',');
+  }
+  if (postType) {
+    params.postType = postType;
   }
   const { data } = await client.get('/deals', { params });
   return data.deals;
