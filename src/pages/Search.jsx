@@ -168,16 +168,16 @@ export default function Search() {
 
       {view === 'map' && (
         <>
-          <div className="px-4 py-3 space-y-2">
-            <div className="relative">
+          <div className="px-4 py-3 flex items-center gap-2">
+            <div className="relative w-[150px] flex-shrink-0">
               <MapPin
                 size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
               />
               <select
                 onChange={handleCitySelect}
                 value=""
-                className="w-full appearance-none bg-slate-100 rounded-xl pl-11 pr-4 py-3 text-sm text-brand-navy cursor-pointer outline-none"
+                className="w-full appearance-none bg-slate-100 rounded-xl pl-9 pr-2 py-3 text-sm text-brand-navy cursor-pointer outline-none"
               >
                 <option value="" disabled>
                   {availableCities.length > 0
@@ -192,7 +192,7 @@ export default function Search() {
               </select>
             </div>
 
-            <div className="flex justify-center gap-1.5">
+            <div className="flex-1 flex justify-center gap-1.5">
               {POST_TYPE_OPTIONS.map((opt) => (
                 <button
                   key={opt.label}
@@ -208,6 +208,11 @@ export default function Search() {
                 </button>
               ))}
             </div>
+
+            {/* Invisible spacer matching the dropdown's width, so the pills
+                land dead-center on the full row instead of just the space
+                remaining after the dropdown. */}
+            <div className="w-[150px] flex-shrink-0" aria-hidden="true" />
           </div>
 
           <div className="relative h-[60vh]">
