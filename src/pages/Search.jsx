@@ -122,12 +122,14 @@ export default function Search() {
         (deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
     )
     .filter((deal) => {
-      // No day filter selected -> show everything.
+      // No day filter selected -> show everything, regardless of each
+      // deal's own day tagging.
       if (selectedDays.size === 0) return true;
-      // Deal has no day restriction of its own (valid every day) -> always matches.
-      if (!deal.valid_days_of_week || deal.valid_days_of_week.length === 0) return true;
-      // Otherwise match if the deal is valid on at least one selected day
-      // (e.g. picking Fri + Sat matches a deal valid on either).
+      // A day filter IS active -> only show deals explicitly tagged for
+      // at least one selected day. Untagged/"any day" deals are excluded
+      // here on purpose - mixing them in would clutter a day-specific
+      // search and defeat the point of filtering by day.
+      if (!deal.valid_days_of_week || deal.valid_days_of_week.length === 0) return false;
       return deal.valid_days_of_week.some((day) => selectedDays.has(day));
     });
 
