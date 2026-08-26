@@ -18,7 +18,7 @@ import { MapPin } from 'lucide-react';
 export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
-  const { allSelected, selectedSubs, selectedDiscountTags } = useFilters();
+  const { allSelected, selectedSubs, selectedDiscountTags, selectedDays } = useFilters();
   // Stored in the URL (not plain local state) so it survives navigating
   // to Filters and back — that round trip fully remounts this page, which
   // would otherwise silently reset the toggle back to Map every time.
@@ -115,11 +115,21 @@ export default function Search() {
     setFocusPosition(city.position);
   }
 
-  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_name))).filter(
-    (deal) =>
-      selectedDiscountTags.size === 0 ||
-      (deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
-  );
+  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_name)))
+    .filter(
+      (deal) =>
+        selectedDiscountTags.size === 0 ||
+        (deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
+    )
+    .filter((deal) => {
+      // No day filter selected -> show everything.
+      if (selectedDays.size === 0) return true;
+      // Deal has no day restriction of its own (valid every day) -> always matches.
+      if (!deal.valid_days_of_week || deal.valid_days_of_week.length === 0) return true;
+      // Otherwise match if the deal is valid on at least one selected day
+      // (e.g. picking Fri + Sat matches a deal valid on either).
+      return deal.valid_days_of_week.some((day) => selectedDays.has(day));
+    });
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 

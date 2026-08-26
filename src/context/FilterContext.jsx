@@ -6,11 +6,13 @@ export function FilterProvider({ children }) {
   const [allSelected, setAllSelected] = useState(true);
   const [selectedSubs, setSelectedSubs] = useState(new Set());
   const [selectedDiscountTags, setSelectedDiscountTags] = useState(new Set());
+  const [selectedDays, setSelectedDays] = useState(new Set()); // empty = "Any" (no day filter)
 
   function clearSelections() {
     setAllSelected(true);
     setSelectedSubs(new Set());
     setSelectedDiscountTags(new Set());
+    setSelectedDays(new Set());
   }
 
   function toggleAll() {
@@ -45,13 +47,26 @@ export function FilterProvider({ children }) {
     });
   }
 
+  // Multi-select - e.g. picking Fri + Sat for a weekend getaway. An empty
+  // set means "Any" (no day filter applied).
+  function toggleDay(day) {
+    setSelectedDays((prev) => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  }
+
   const value = {
     allSelected,
     selectedSubs,
     selectedDiscountTags,
+    selectedDays,
     toggleAll,
     toggleSub,
     toggleDiscountTag,
+    toggleDay,
     clearSelections,
   };
 

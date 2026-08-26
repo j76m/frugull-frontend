@@ -14,15 +14,28 @@ const DISCOUNT_TAGS = [
   { value: 'first_responder', label: 'First Responder' },
 ];
 
+// Matches JS Date.getDay() convention: 0 = Sunday ... 6 = Saturday.
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+];
+
 export default function Filters() {
   const navigate = useNavigate();
   const {
     allSelected,
     selectedSubs,
     selectedDiscountTags,
+    selectedDays,
     toggleAll,
     toggleSub,
     toggleDiscountTag,
+    toggleDay,
     clearSelections,
   } = useFilters();
   const [deals, setDeals] = useState(null); // null = still loading
@@ -113,6 +126,27 @@ export default function Filters() {
                 }`}
               >
                 {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Valid days */}
+        <div className="pb-4 mb-4 border-b border-slate-200">
+          <p className="text-brand-navy font-medium text-sm mb-2">Valid on</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {DAYS_OF_WEEK.map((day) => (
+              <button
+                key={day.value}
+                type="button"
+                onClick={() => toggleDay(day.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  selectedDays.has(day.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {day.label}
               </button>
             ))}
           </div>
