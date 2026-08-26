@@ -180,9 +180,7 @@ export default function Search() {
                 className="w-full appearance-none bg-slate-100 rounded-xl pl-9 pr-2 py-3 text-sm text-brand-navy cursor-pointer outline-none"
               >
                 <option value="" disabled>
-                  {availableCities.length > 0
-                    ? 'Jump to a city with active deals'
-                    : 'No active cities yet'}
+                  {availableCities.length > 0 ? 'Jump to a city' : 'No cities yet'}
                 </option>
                 {availableCities.map((c) => (
                   <option key={c.label} value={c.label}>
