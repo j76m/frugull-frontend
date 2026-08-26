@@ -169,7 +169,7 @@ export default function Search() {
       {view === 'map' && (
         <>
           <div className="px-4 py-3 flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[180px]">
+            <div className="relative w-auto min-w-[180px]">
               <MapPin
                 size={18}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
@@ -192,7 +192,7 @@ export default function Search() {
               </select>
             </div>
 
-            <div className="flex gap-1.5 flex-shrink-0">
+            <div className="flex-1 flex justify-center gap-1.5">
               {POST_TYPE_OPTIONS.map((opt) => (
                 <button
                   key={opt.label}
