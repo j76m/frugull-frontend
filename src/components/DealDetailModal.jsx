@@ -16,6 +16,8 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   if (!deal) return null;
 
@@ -50,15 +52,34 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
     }
   }
 
-  // Opens the deal photo directly in a new tab, exactly like viewing any
-  // photo - this lets the user long-press to save it (iOS/Android) or tap
-  // the browser's own share icon to get "Save Image" as a top-level option,
-  // matching the familiar native photo-saving flow instead of forcing a
-  // file download into Files/Downloads. No fetch/CORS needed since this is
-  // a plain navigation, not a script reading the image's bytes.
-  function handleDownload() {
+  // Downloads the deal photo to the user's device (camera roll on mobile,
+  // Downloads folder on desktop) so they can post it to any app themselves -
+  // this is the universal path that works identically everywhere, including
+  // Instagram, which doesn't accept shared photos from web apps at all.
+  // Confirmed working: file downloads, then "More..." -> "Save Image"
+  // in the resulting Safari file view puts it in Photos.
+  async function handleDownload() {
     if (!deal.image_url) return;
-    window.open(deal.image_url, '_blank', 'noopener,noreferrer');
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      const response = await fetch(deal.image_url, { cache: 'no-store' });
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const filename = deal.business_name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-frugull.jpg';
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      setDownloadError('Could not download photo. Try again.');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function handleFacebookShare() {
@@ -165,12 +186,14 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
               <button
                 type="button"
                 onClick={handleDownload}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-brand-navy text-white py-2.5 text-sm font-medium cursor-pointer mb-2"
+                disabled={downloading}
+                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-brand-navy text-white py-2.5 text-sm font-medium cursor-pointer disabled:opacity-50 mb-2"
               >
                 <Download size={16} />
-                View & Save Photo
+                {downloading ? 'Downloading...' : 'Download Photo to Post Yourself'}
               </button>
             )}
+            {downloadError && <p className="text-red-500 text-xs mb-2">{downloadError}</p>}
 
             <div className="flex gap-2">
               {canNativeShare && (
@@ -196,7 +219,7 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
               </button>
             </div>
             <p className="text-brand-gray text-[11px] mt-2">
-              Tap "View & Save Photo" to open it, then long-press or tap Share to save it and post it yourself.
+              Download the photo, then tap "More..." → "Save Image" to add it to your camera roll and post it anywhere.
             </p>
           </div>
 
