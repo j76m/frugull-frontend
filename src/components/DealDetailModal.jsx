@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart } from 'lucide-react';
+import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download } from 'lucide-react';
 import { submitReport } from '../api/reports';
 
 const REPORT_REASONS = [
@@ -16,6 +16,8 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [reportError, setReportError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   if (!deal) return null;
 
@@ -47,6 +49,34 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
       } catch {
         // User cancelled the native share sheet.
       }
+    }
+  }
+
+  // Downloads the deal photo to the user's device (camera roll on mobile,
+  // Downloads folder on desktop) so they can post it to any app themselves -
+  // this is the universal path that works identically everywhere, including
+  // Instagram, which doesn't accept shared photos from web apps at all.
+  async function handleDownload() {
+    if (!deal.image_url) return;
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      const response = await fetch(deal.image_url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const filename = deal.business_name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-frugull.jpg';
+
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      setDownloadError('Could not download photo. Try again.');
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -149,6 +179,20 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
 
           <div className="mt-5 border-t border-slate-100 pt-4">
             <p className="text-brand-navy font-medium text-sm mb-2">Share this deal</p>
+
+            {deal.image_url && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-brand-navy text-white py-2.5 text-sm font-medium cursor-pointer disabled:opacity-50 mb-2"
+              >
+                <Download size={16} />
+                {downloading ? 'Downloading...' : 'Download Photo to Post Yourself'}
+              </button>
+            )}
+            {downloadError && <p className="text-red-500 text-xs mb-2">{downloadError}</p>}
+
             <div className="flex gap-2">
               {canNativeShare && (
                 <button type="button" onClick={handleShare} className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 py-2.5 text-brand-navy text-xs font-medium cursor-pointer hover:bg-slate-200">
@@ -173,9 +217,7 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
               </button>
             </div>
             <p className="text-brand-gray text-[11px] mt-2">
-              {canNativeShare
-                ? 'Tap Share to send the photo directly to Instagram, Messages, and more.'
-                : 'For Instagram: copy the link above, then paste it into your Story or DM.'}
+              Download the photo to post it yourself on Instagram, Facebook, or anywhere else.
             </p>
           </div>
 
