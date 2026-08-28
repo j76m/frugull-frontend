@@ -31,7 +31,7 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
     let sharedWithFile = false;
     if (navigator.canShare && deal.image_url) {
       try {
-        const response = await fetch(deal.image_url);
+        const response = await fetch(deal.image_url, { cache: 'no-store' });
         const blob = await response.blob();
         const file = new File([blob], 'deal.jpg', { type: blob.type || 'image/jpeg' });
         if (navigator.canShare({ files: [file] })) {
@@ -56,12 +56,14 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
   // Downloads folder on desktop) so they can post it to any app themselves -
   // this is the universal path that works identically everywhere, including
   // Instagram, which doesn't accept shared photos from web apps at all.
+  // cache: 'no-store' avoids reusing the browser's plain <img> cache entry
+  // for this same URL, which lacks CORS validation and causes fetch to fail.
   async function handleDownload() {
     if (!deal.image_url) return;
     setDownloading(true);
     setDownloadError('');
     try {
-      const response = await fetch(deal.image_url);
+      const response = await fetch(deal.image_url, { cache: 'no-store' });
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const filename = deal.business_name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-frugull.jpg';
@@ -73,8 +75,8 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-      setDownloadError('DEBUG: ' + (err?.message || String(err)));
+    } catch {
+      setDownloadError('Could not download photo. Try again.');
     } finally {
       setDownloading(false);
     }
