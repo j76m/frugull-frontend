@@ -19,10 +19,10 @@ function loadImage(src) {
   });
 }
 
-// Fetches the deal photo and stamps the Frugull logo onto the bottom-right
-// corner via canvas - only the copy that leaves the app (downloaded or
-// shared) gets watermarked; the original in the database and everything
-// shown inside the app stays clean.
+// Fetches the deal photo and stamps a white "Find this on [frugull logo]"
+// badge onto the bottom-right corner via canvas - only the copy that
+// leaves the app (downloaded or shared) gets watermarked; the original in
+// the database and everything shown inside the app stays clean.
 async function getWatermarkedBlob(imageUrl) {
   const response = await fetch(imageUrl, { cache: 'no-store' });
   const blob = await response.blob();
@@ -35,19 +35,44 @@ async function getWatermarkedBlob(imageUrl) {
   ctx.drawImage(bitmap, 0, 0);
 
   const logo = await loadImage(logoImg);
-  const logoWidth = Math.round(canvas.width * 0.28);
+  const logoWidth = Math.round(canvas.width * 0.22);
   const logoHeight = Math.round(logoWidth * (logo.height / logo.width));
+  const fontSize = Math.max(14, Math.round(canvas.width * 0.022));
   const padding = Math.round(canvas.width * 0.02);
+  const gap = Math.round(fontSize * 0.4);
 
-  ctx.globalAlpha = 0.9;
+  const label = 'Find this on';
+  ctx.font = `600 ${fontSize}px sans-serif`;
+  const labelWidth = ctx.measureText(label).width;
+
+  const boxWidth = Math.max(labelWidth, logoWidth) + padding * 2;
+  const boxHeight = fontSize + gap + logoHeight + padding * 2;
+  const boxX = canvas.width - boxWidth - padding;
+  const boxY = canvas.height - boxHeight - padding;
+  const radius = Math.round(padding * 0.8);
+
+  // White rounded badge behind the text/logo so it stays legible over any photo.
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(boxX, boxY, boxWidth, boxHeight, radius);
+  } else {
+    ctx.rect(boxX, boxY, boxWidth, boxHeight);
+  }
+  ctx.fill();
+
+  ctx.fillStyle = '#1E3A54';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(label, boxX + boxWidth / 2, boxY + padding * 0.6);
+
   ctx.drawImage(
     logo,
-    canvas.width - logoWidth - padding,
-    canvas.height - logoHeight - padding,
+    boxX + (boxWidth - logoWidth) / 2,
+    boxY + padding * 0.6 + fontSize + gap,
     logoWidth,
     logoHeight
   );
-  ctx.globalAlpha = 1;
 
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 }
