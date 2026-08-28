@@ -73,8 +73,8 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
-    } catch {
-      setDownloadError('Could not download photo. Try again.');
+        } catch (err) {
+      setDownloadError('DEBUG: ' + (err?.message || String(err)));
     } finally {
       setDownloading(false);
     }
