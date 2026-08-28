@@ -41,7 +41,7 @@ async function getWatermarkedBlob(imageUrl) {
   const padding = Math.round(canvas.width * 0.02);
   const gap = Math.round(fontSize * 0.4);
 
-  const label = 'Find this on';
+  const label = 'Shared from';
   ctx.font = `600 ${fontSize}px sans-serif`;
   const labelWidth = ctx.measureText(label).width;
 
