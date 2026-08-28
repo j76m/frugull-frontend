@@ -19,7 +19,7 @@ function loadImage(src) {
   });
 }
 
-// Fetches the deal photo and stamps a white "Find this on [frugull logo]"
+// Fetches the deal photo and stamps a white "Shared from [frugull logo].com"
 // badge onto the bottom-right corner via canvas - only the copy that
 // leaves the app (downloaded or shared) gets watermarked; the original in
 // the database and everything shown inside the app stays clean.
@@ -42,10 +42,18 @@ async function getWatermarkedBlob(imageUrl) {
   const gap = Math.round(fontSize * 0.4);
 
   const label = 'Shared from';
+  const comText = '.com';
+  const comFontSize = Math.round(logoHeight * 0.5);
+  const comGap = Math.round(padding * 0.3);
+
   ctx.font = `600 ${fontSize}px sans-serif`;
   const labelWidth = ctx.measureText(label).width;
 
-  const boxWidth = Math.max(labelWidth, logoWidth) + padding * 2;
+  ctx.font = `700 ${comFontSize}px sans-serif`;
+  const comWidth = ctx.measureText(comText).width;
+
+  const row2Width = logoWidth + comGap + comWidth;
+  const boxWidth = Math.max(labelWidth, row2Width) + padding * 2;
   const boxHeight = fontSize + gap + logoHeight + padding * 2;
   const boxX = canvas.width - boxWidth - padding;
   const boxY = canvas.height - boxHeight - padding;
@@ -64,15 +72,18 @@ async function getWatermarkedBlob(imageUrl) {
   ctx.fillStyle = '#1E3A54';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+  ctx.font = `600 ${fontSize}px sans-serif`;
   ctx.fillText(label, boxX + boxWidth / 2, boxY + padding * 0.6);
 
-  ctx.drawImage(
-    logo,
-    boxX + (boxWidth - logoWidth) / 2,
-    boxY + padding * 0.6 + fontSize + gap,
-    logoWidth,
-    logoHeight
-  );
+  const row2Y = boxY + padding * 0.6 + fontSize + gap;
+  const row2StartX = boxX + (boxWidth - row2Width) / 2;
+
+  ctx.drawImage(logo, row2StartX, row2Y, logoWidth, logoHeight);
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `700 ${comFontSize}px sans-serif`;
+  ctx.fillText(comText, row2StartX + logoWidth + comGap, row2Y + logoHeight * 0.75);
 
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 }
