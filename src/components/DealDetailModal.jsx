@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download } from 'lucide-react';
 import { submitReport } from '../api/reports';
+import logoImg from '../assets/frugull-logo.png';
 
 const REPORT_REASONS = [
   { value: 'deal_no_longer_valid', label: 'Deal is no longer valid' },
@@ -8,6 +9,48 @@ const REPORT_REASONS = [
   { value: 'inappropriate', label: 'Inappropriate content' },
   { value: 'other', label: 'Other' },
 ];
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Fetches the deal photo and stamps the Frugull logo onto the bottom-right
+// corner via canvas - only the copy that leaves the app (downloaded or
+// shared) gets watermarked; the original in the database and everything
+// shown inside the app stays clean.
+async function getWatermarkedBlob(imageUrl) {
+  const response = await fetch(imageUrl, { cache: 'no-store' });
+  const blob = await response.blob();
+  const bitmap = await createImageBitmap(blob);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0);
+
+  const logo = await loadImage(logoImg);
+  const logoWidth = Math.round(canvas.width * 0.28);
+  const logoHeight = Math.round(logoWidth * (logo.height / logo.width));
+  const padding = Math.round(canvas.width * 0.02);
+
+  ctx.globalAlpha = 0.9;
+  ctx.drawImage(
+    logo,
+    canvas.width - logoWidth - padding,
+    canvas.height - logoHeight - padding,
+    logoWidth,
+    logoHeight
+  );
+  ctx.globalAlpha = 1;
+
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+}
 
 export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }) {
   const [copied, setCopied] = useState(false);
@@ -31,9 +74,8 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
     let sharedWithFile = false;
     if (navigator.canShare && deal.image_url) {
       try {
-        const response = await fetch(deal.image_url, { cache: 'no-store' });
-        const blob = await response.blob();
-        const file = new File([blob], 'deal.jpg', { type: blob.type || 'image/jpeg' });
+        const watermarkedBlob = await getWatermarkedBlob(deal.image_url);
+        const file = new File([watermarkedBlob], 'deal.jpg', { type: 'image/jpeg' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({ title: deal.business_name, text: shareText, files: [file] });
           sharedWithFile = true;
@@ -52,20 +94,18 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
     }
   }
 
-  // Downloads the deal photo to the user's device (camera roll on mobile,
-  // Downloads folder on desktop) so they can post it to any app themselves -
-  // this is the universal path that works identically everywhere, including
-  // Instagram, which doesn't accept shared photos from web apps at all.
-  // Confirmed working: file downloads, then "More..." -> "Save Image"
-  // in the resulting Safari file view puts it in Photos.
+  // Downloads a watermarked copy of the deal photo to the user's device -
+  // this is the universal path that works identically everywhere,
+  // including Instagram, which doesn't accept shared photos from web apps.
+  // Confirmed working: file downloads, then "More..." -> "Save Image" (or
+  // the share icon -> "Save Image") in Safari's file view puts it in Photos.
   async function handleDownload() {
     if (!deal.image_url) return;
     setDownloading(true);
     setDownloadError('');
     try {
-      const response = await fetch(deal.image_url, { cache: 'no-store' });
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      const watermarkedBlob = await getWatermarkedBlob(deal.image_url);
+      const blobUrl = URL.createObjectURL(watermarkedBlob);
       const filename = deal.business_name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-frugull.jpg';
 
       const link = document.createElement('a');
