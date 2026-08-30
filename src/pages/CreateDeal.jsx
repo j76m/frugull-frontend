@@ -31,6 +31,32 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Sat' },
 ];
 
+const POST_TYPES = [
+  { value: 'deal', label: 'Deal / Special' },
+  { value: 'info', label: 'General Info' },
+];
+
+// Resizes and compresses a photo before upload - phone camera photos are
+// often 3-4000px wide and several MB, but the app never displays them
+// larger than ~500px, so this cuts file size dramatically (typically to
+// 200-400KB) with no visible quality loss, improving load speed and
+// cutting S3 storage/bandwidth costs as the app grows.
+async function compressImage(file, maxDimension = 1600, quality = 0.8) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+  return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+}
+
 export default function CreateDeal() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
@@ -79,11 +105,18 @@ export default function CreateDeal() {
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
 
-  function handlePhotoChange(e) {
+  async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreviewUrl(URL.createObjectURL(file));
+    try {
+      const compressed = await compressImage(file);
+      setPhotoFile(compressed);
+      setPhotoPreviewUrl(URL.createObjectURL(compressed));
+    } catch {
+      // Fall back to the original file if compression fails for any reason.
+      setPhotoFile(file);
+      setPhotoPreviewUrl(URL.createObjectURL(file));
+    }
   }
 
   function handleCategoryChange(e) {
@@ -158,35 +191,6 @@ export default function CreateDeal() {
     <AppLayout>
       <TopNav leftLabel="Cancel" onLeft={() => navigate(-1)} />
       <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-5">
-        {/* Post type toggle */}
-        <div>
-          <div className="flex rounded-xl border-2 border-brand-navy overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setPostType('deal')}
-              className={`flex-1 py-2.5 text-sm font-semibold ${
-                postType === 'deal' ? 'bg-brand-navy text-white' : 'bg-white text-brand-navy'
-              }`}
-            >
-              Deal / Special
-            </button>
-            <button
-              type="button"
-              onClick={() => setPostType('info')}
-              className={`flex-1 py-2.5 text-sm font-semibold ${
-                postType === 'info' ? 'bg-brand-navy text-white' : 'bg-white text-brand-navy'
-              }`}
-            >
-              General Info
-            </button>
-          </div>
-          <p className="text-brand-gray text-xs text-center mt-1.5">
-            {postType === 'deal'
-              ? "A discount, special, or limited-time offer."
-              : "A menu, hours, or other info that isn't a discount."}
-          </p>
-        </div>
-
         {/* Photo capture */}
         <div>
           <input
@@ -200,10 +204,14 @@ export default function CreateDeal() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full aspect-square bg-slate-100 rounded-xl border border-slate-200 flex flex-col items-center justify-center gap-2 overflow-hidden cursor-pointer"
+            className="relative w-full aspect-square bg-slate-100 rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center gap-2 overflow-hidden cursor-pointer"
           >
             {photoPreviewUrl ? (
-              <img src={photoPreviewUrl} alt="Deal preview" className="w-full h-full object-cover" />
+              <img
+                src={photoPreviewUrl}
+                alt="Deal preview"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             ) : (
               <>
                 <Camera size={32} className="text-brand-gray" />
@@ -211,6 +219,27 @@ export default function CreateDeal() {
               </>
             )}
           </button>
+        </div>
+
+        {/* Post type */}
+        <div>
+          <label className="block text-sm text-slate-600 mb-2">Post type</label>
+          <div className="flex flex-wrap justify-center gap-2">
+            {POST_TYPES.map((type) => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setPostType(type.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  postType === type.value
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Business */}
