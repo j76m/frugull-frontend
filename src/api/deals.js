@@ -1,5 +1,16 @@
 import client from './client';
 
+// Read-only check of what posting to this business+subcategory would look
+// like right now (which method applies, and the max duration allowed) -
+// used by the Post screen to show an accurate duration picker before
+// submitting. Never consumes a credit, unlike the actual post itself.
+export async function fetchPreviewAllowance(businessId, subcategoryId) {
+  const { data } = await client.get('/deals/preview-allowance', {
+    params: { businessId, subcategoryId: subcategoryId || undefined },
+  });
+  return data;
+}
+
 // businessId, categoryId, subcategoryId, caption, imageUrl are required.
 // requestedDurationDays and validDaysOfWeek are Pro/Credit-tier fields —
 // safe to omit for Free tier, which gets the fixed duration automatically

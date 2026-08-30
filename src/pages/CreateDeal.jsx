@@ -7,9 +7,8 @@ import BusinessSearchInput from '../components/BusinessSearchInput';
 import { fetchCategories } from '../api/categories';
 import { findOrCreateBusiness } from '../api/businesses';
 import { getUploadUrl, uploadFileToS3 } from '../api/upload';
-import { createDeal } from '../api/deals';
+import { createDeal, fetchPreviewAllowance } from '../api/deals';
 import { fetchMe } from '../api/auth';
-import { fetchSubscriptionStatus } from '../api/subscriptions';
 import { useAuth } from '../context/AuthContext';
 
 const DISCOUNT_TAGS = [
@@ -57,6 +56,11 @@ async function compressImage(file, maxDimension = 1600, quality = 0.8) {
   return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
 }
 
+// Formats a Date as YYYY-MM-DD for use in an <input type="date"> value/min/max.
+function toDateInputValue(date) {
+  return date.toISOString().split('T')[0];
+}
+
 export default function CreateDeal() {
   const navigate = useNavigate();
   const { setUser } = useAuth();
@@ -64,17 +68,22 @@ export default function CreateDeal() {
 
   const [categories, setCategories] = useState([]);
   const [categoriesError, setCategoriesError] = useState('');
-  const [isUnlimited, setIsUnlimited] = useState(false);
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
-  const [business, setBusiness] = useState(null);
+  const [business, setBusiness] = useState(null); // raw Google Place result, for display
+  const [businessRecord, setBusinessRecord] = useState(null); // real DB row, for API calls
+  const [businessError, setBusinessError] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
   const [caption, setCaption] = useState('');
   const [discountTags, setDiscountTags] = useState([]);
   const [validDays, setValidDays] = useState([]); // empty array = "Any"
   const [postType, setPostType] = useState('deal');
+
+  const [allowance, setAllowance] = useState(null); // { allowed, method, maxDurationDays }
+  const [allowanceLoading, setAllowanceLoading] = useState(false);
+  const [durationDays, setDurationDays] = useState(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -97,11 +106,28 @@ export default function CreateDeal() {
         setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
       })
       .catch(() => setCategoriesError('Could not load categories.'));
-
-    fetchSubscriptionStatus()
-      .then((sub) => setIsUnlimited(sub.plan === 'unlimited'))
-      .catch(() => setIsUnlimited(false));
   }, []);
+
+  // Fetches an accurate preview of which posting method (Free/Credit/
+  // Unlimited) applies and what duration is allowed, as soon as both a
+  // business and subcategory are chosen - since Free-tier eligibility
+  // depends on that specific business+subcategory combo, not just the
+  // user's subscription status.
+  useEffect(() => {
+    if (!businessRecord?.id || !subcategoryId) {
+      setAllowance(null);
+      setDurationDays(null);
+      return;
+    }
+    setAllowanceLoading(true);
+    fetchPreviewAllowance(businessRecord.id, subcategoryId)
+      .then((result) => {
+        setAllowance(result);
+        setDurationDays(result.method !== 'free' ? result.maxDurationDays : null);
+      })
+      .catch(() => setAllowance(null))
+      .finally(() => setAllowanceLoading(false));
+  }, [businessRecord?.id, subcategoryId]);
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
 
@@ -116,6 +142,21 @@ export default function CreateDeal() {
       // Fall back to the original file if compression fails for any reason.
       setPhotoFile(file);
       setPhotoPreviewUrl(URL.createObjectURL(file));
+    }
+  }
+
+  // Finds-or-creates the business record as soon as it's selected (rather
+  // than waiting for final submit) so we have a real database ID to check
+  // the accurate posting-allowance preview against.
+  async function handleBusinessSelect(place) {
+    setBusiness(place);
+    setBusinessRecord(null);
+    setBusinessError('');
+    try {
+      const record = await findOrCreateBusiness(place);
+      setBusinessRecord(record);
+    } catch {
+      setBusinessError('Could not look up this business. Try selecting it again.');
     }
   }
 
@@ -136,8 +177,23 @@ export default function CreateDeal() {
     );
   }
 
+  function handleDurationDateChange(e) {
+    if (!allowance || allowance.method === 'free') return;
+    const chosen = new Date(e.target.value + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((chosen - today) / (1000 * 60 * 60 * 24));
+    const clamped = Math.min(Math.max(diffDays, 1), allowance.maxDurationDays);
+    setDurationDays(clamped);
+  }
+
   const canSubmit =
-    photoFile && business && categoryId && subcategoryId && caption.trim().length > 0 && !submitting;
+    photoFile &&
+    businessRecord &&
+    categoryId &&
+    subcategoryId &&
+    caption.trim().length > 0 &&
+    !submitting;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -151,10 +207,8 @@ export default function CreateDeal() {
       const { uploadUrl, publicUrl } = await getUploadUrl(photoFile.type);
       await uploadFileToS3(uploadUrl, photoFile);
 
-      // 2. Find-or-create the business by Google Place ID.
-      const businessRecord = await findOrCreateBusiness(business);
-
-      // 3. Create the deal itself.
+      // 2. Create the deal - businessRecord was already found-or-created
+      // when the business was selected, so we reuse its id here.
       await createDeal({
         businessId: businessRecord.id,
         categoryId: Number(categoryId),
@@ -162,8 +216,8 @@ export default function CreateDeal() {
         caption: caption.trim(),
         imageUrl: publicUrl,
         discountTags: discountTags.length > 0 ? discountTags : undefined,
-        validDaysOfWeek:
-          isUnlimited && validDays.length > 0 ? validDays : undefined,
+        validDaysOfWeek: validDays.length > 0 ? validDays : undefined,
+        requestedDurationDays: durationDays || undefined,
         postType,
       });
 
@@ -186,6 +240,20 @@ export default function CreateDeal() {
       setSubmitting(false);
     }
   }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const maxDate = allowance ? new Date(today) : null;
+  if (maxDate && allowance) maxDate.setDate(maxDate.getDate() + allowance.maxDurationDays);
+  const selectedDate = durationDays
+    ? (() => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + durationDays);
+        return d;
+      })()
+    : null;
 
   return (
     <AppLayout>
@@ -245,10 +313,11 @@ export default function CreateDeal() {
         {/* Business */}
         <div>
           <label className="block text-sm text-slate-600 mb-1">Business</label>
-          <BusinessSearchInput onSelect={setBusiness} selectedName={business?.name} />
+          <BusinessSearchInput onSelect={handleBusinessSelect} selectedName={business?.name} />
           {business && (
             <p className="text-brand-gray text-xs mt-1">{business.address}</p>
           )}
+          {businessError && <p className="text-red-500 text-xs mt-1">{businessError}</p>}
         </div>
 
         {/* Category / Subcategory */}
@@ -323,14 +392,14 @@ export default function CreateDeal() {
           </div>
         </div>
 
-        {/* Valid days of week - Unlimited only, grayed out otherwise as an upsell */}
+        {/* Valid days of week - only meaningful for non-Free posts */}
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Valid days <span className="text-brand-gray">(optional)</span>
           </label>
           <div
             className={`flex flex-wrap justify-center gap-2 ${
-              !isUnlimited ? 'opacity-40 pointer-events-none' : ''
+              !allowance || allowance.method === 'free' ? 'opacity-40 pointer-events-none' : ''
             }`}
           >
             <button
@@ -359,10 +428,47 @@ export default function CreateDeal() {
               </button>
             ))}
           </div>
-          {!isUnlimited && (
+          {(!allowance || allowance.method === 'free') && (
             <p className="text-brand-gray text-xs text-center mt-2">
-              Upgrade to Frugull Unlimited to schedule specific days.
+              {businessRecord && subcategoryId
+                ? 'Free posts run for a fixed window and can\'t be limited to specific days. Upgrade to Frugull Unlimited or use a credit for this.'
+                : 'Select a business and subcategory to see day options.'}
             </p>
+          )}
+        </div>
+
+        {/* Expiration date - shows once we know which method (Free/Credit/
+            Unlimited) applies, since that determines whether it's fixed or
+            choosable and what the max is. */}
+        <div>
+          <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+          {!businessRecord || !subcategoryId ? (
+            <p className="text-brand-gray text-sm">
+              Select a business and subcategory to see how long this post can run.
+            </p>
+          ) : allowanceLoading ? (
+            <p className="text-brand-gray text-sm">Checking...</p>
+          ) : allowance?.method === 'free' ? (
+            <p className="text-brand-navy text-sm">
+              {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
+            </p>
+          ) : allowance ? (
+            <>
+              <input
+                type="date"
+                value={selectedDate ? toDateInputValue(selectedDate) : ''}
+                min={toDateInputValue(tomorrow)}
+                max={maxDate ? toDateInputValue(maxDate) : undefined}
+                onChange={handleDurationDateChange}
+                className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+              />
+              <p className="text-brand-gray text-xs mt-1">
+                Up to {allowance.maxDurationDays} days from today
+                {allowance.method === 'credit' ? ' (using 1 credit)' : ' (Frugull Unlimited)'}.
+              </p>
+            </>
+          ) : (
+            <p className="text-red-500 text-sm">Could not check posting options. Try again.</p>
           )}
         </div>
 
