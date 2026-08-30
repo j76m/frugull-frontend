@@ -204,19 +204,19 @@ export default function CreateDeal() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="relative w-full aspect-square bg-slate-100 rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center gap-2 overflow-hidden cursor-pointer"
+            className="w-full bg-slate-100 rounded-xl border-2 border-slate-200 overflow-hidden cursor-pointer"
           >
             {photoPreviewUrl ? (
               <img
                 src={photoPreviewUrl}
                 alt="Deal preview"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-auto max-h-[60vh] object-contain block"
               />
             ) : (
-              <>
+              <div className="flex flex-col items-center justify-center gap-2 py-16">
                 <Camera size={32} className="text-brand-gray" />
                 <span className="text-brand-gray text-sm">Take or choose a photo</span>
-              </>
+              </div>
             )}
           </button>
         </div>
