@@ -197,7 +197,7 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
         {deal.image_url && (
           <div className="relative">
-            <img src={deal.image_url} alt={deal.business_name} className="w-full aspect-video object-cover" />
+            <img src={deal.image_url} alt={deal.business_name} className="w-full h-auto max-h-[70vh] object-contain block bg-slate-100" />
             <button type="button" onClick={onClose} aria-label="Close" className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center cursor-pointer">
               <X size={18} className="text-brand-navy" />
             </button>
