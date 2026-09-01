@@ -193,11 +193,12 @@ export default function Profile() {
 
                       {isEditing ? (
                         <div className="flex flex-col gap-2">
+                          <label className="text-brand-navy text-xs font-medium">Post description</label>
                           <textarea
                             value={editCaption}
                             onChange={(e) => setEditCaption(e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-slate-200 p-2 text-sm text-brand-navy outline-none"
+                            className="w-full rounded-lg border-2 border-slate-300 focus:border-brand-link p-2 text-sm text-brand-navy outline-none"
                           />
                           <div className="flex gap-2">
                             <button
