@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
 import RankProgress from '../components/RankProgress';
@@ -9,6 +10,8 @@ import { useAuth } from '../context/AuthContext';
 import { TIERS } from '../data/ranks';
 import { getRankIconUrl } from '../utils/rankIcons';
 import { fetchSavedDeals, unsaveDeal } from '../api/savedDeals';
+import { fetchSubscriptionStatus } from '../api/subscriptions';
+import { fetchMyDeals, updateDeal, deleteDeal } from '../api/deals';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -19,11 +22,32 @@ export default function Profile() {
   const [savedError, setSavedError] = useState('');
   const [selectedDealId, setSelectedDealId] = useState(null);
 
+  const [plan, setPlan] = useState(null);
+  const [myDeals, setMyDeals] = useState([]);
+  const [myDealsError, setMyDealsError] = useState('');
+  const [expandedDealId, setExpandedDealId] = useState(null);
+  const [editingDealId, setEditingDealId] = useState(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => {
     fetchSavedDeals()
       .then(setSavedDeals)
       .catch(() => setSavedError('Could not load saved deals.'));
   }, []);
+
+  useEffect(() => {
+    fetchSubscriptionStatus()
+      .then((sub) => setPlan(sub?.plan ?? 'free'))
+      .catch(() => setPlan('free'));
+  }, []);
+
+  useEffect(() => {
+    if (plan !== 'unlimited') return;
+    fetchMyDeals()
+      .then(setMyDeals)
+      .catch(() => setMyDealsError('Could not load your posts.'));
+  }, [plan]);
 
   const selectedDeal = savedDeals.find((d) => d.id === selectedDealId);
 
@@ -33,6 +57,41 @@ export default function Profile() {
       await unsaveDeal(deal.id);
     } catch {
       setSavedDeals((prev) => [...prev, deal]);
+    }
+  }
+
+  function startEdit(deal) {
+    setEditingDealId(deal.id);
+    setEditCaption(deal.caption || '');
+  }
+
+  function cancelEdit() {
+    setEditingDealId(null);
+    setEditCaption('');
+  }
+
+  async function saveEdit(dealId) {
+    setSavingEdit(true);
+    try {
+      const updated = await updateDeal(dealId, { caption: editCaption });
+      setMyDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, ...updated } : d)));
+      setEditingDealId(null);
+    } catch {
+      setMyDealsError('Could not save changes. Try again.');
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleDelete(dealId) {
+    if (!window.confirm('Delete this post? This can\'t be undone.')) return;
+    const prev = myDeals;
+    setMyDeals((cur) => cur.filter((d) => d.id !== dealId));
+    try {
+      await deleteDeal(dealId);
+    } catch {
+      setMyDeals(prev);
+      setMyDealsError('Could not delete post. Try again.');
     }
   }
 
@@ -60,6 +119,107 @@ export default function Profile() {
       </div>
 
       <MembershipSection />
+
+      {plan === 'unlimited' && (
+        <div className="mt-6 pt-4 border-t border-slate-200">
+          <p className="text-brand-navy font-medium text-sm px-4 mb-3">My Posts</p>
+
+          {myDealsError && <p className="text-red-500 text-sm px-4">{myDealsError}</p>}
+
+          {!myDealsError && myDeals.length === 0 && (
+            <p className="text-brand-gray text-sm px-4">
+              No active posts yet — deals you post will show up here for editing.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-3 px-4">
+            {myDeals.map((deal) => {
+              const isExpanded = expandedDealId === deal.id;
+              const isEditing = editingDealId === deal.id;
+
+              return (
+                <div key={deal.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedDealId(isExpanded ? null : deal.id)}
+                    className="cursor-pointer w-full flex items-center justify-between p-4 text-left"
+                  >
+                    <div>
+                      <p className="text-brand-navy font-medium text-sm">{deal.business_name}</p>
+                      <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp size={18} className="text-brand-gray flex-shrink-0" />
+                    ) : (
+                      <ChevronDown size={18} className="text-brand-gray flex-shrink-0" />
+                    )}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4">
+                      {deal.image_url && (
+                        <img
+                          src={deal.image_url}
+                          alt={deal.business_name}
+                          className="w-full h-40 object-cover rounded-lg mb-3"
+                        />
+                      )}
+
+                      {isEditing ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={editCaption}
+                            onChange={(e) => setEditCaption(e.target.value)}
+                            rows={3}
+                            className="w-full rounded-lg border border-slate-200 p-2 text-sm text-brand-navy outline-none"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveEdit(deal.id)}
+                              disabled={savingEdit}
+                              className="cursor-pointer flex-1 rounded-lg bg-brand-navy text-white text-sm font-medium py-2 disabled:opacity-50"
+                            >
+                              {savingEdit ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="cursor-pointer flex-1 rounded-lg bg-slate-100 text-brand-navy text-sm font-medium py-2"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-brand-gray text-sm mb-3">{deal.caption}</p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => startEdit(deal)}
+                              className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 text-brand-navy text-sm font-medium py-2 hover:bg-slate-200"
+                            >
+                              <Pencil size={14} /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(deal.id)}
+                              className="cursor-pointer flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 text-red-600 text-sm font-medium py-2 hover:bg-red-100"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 pt-4 border-t border-slate-200">
         <p className="text-brand-navy font-medium text-sm px-4 mb-3">Saved Deals</p>

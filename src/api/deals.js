@@ -65,3 +65,22 @@ export async function fetchDeals(bounds, discountTags, postType) {
   const { data } = await client.get('/deals', { params });
   return data.deals;
 }
+
+export async function fetchMyDeals() {
+  const { data } = await client.get('/deals/mine');
+  return data.deals;
+}
+
+export async function updateDeal(dealId, { caption, imageUrl, discountTags, validDaysOfWeek }) {
+  const { data } = await client.patch(`/deals/${dealId}`, {
+    caption,
+    imageUrl,
+    discountTags,
+    validDaysOfWeek,
+  });
+  return data.deal;
+}
+
+export async function deleteDeal(dealId) {
+  await client.delete(`/deals/${dealId}`);
+}
