@@ -10,12 +10,14 @@ const containerStyle = {
   height: '100%',
 };
 
-// Fallback center if geolocation is denied/unavailable: Boulder, CO
-// (matches the reference screenshots from the old app).
+// LAST-RESORT fallback only — used if BOTH device GPS and IP-based
+// geolocation fail. Should be rare. Never used as the default center
+// for everyone; see the locate() chain below.
 const DEFAULT_CENTER = { lat: 40.015, lng: -105.2705 };
 
 const MAX_ZOOM_AFTER_FIT = 15;
 const FALLBACK_ZOOM = 12; // used only when there are zero matching deals at all
+const GPS_TIMEOUT_MS = 8000;
 
 // Muted, mostly-grayscale style matching the old app: hides Google's
 // default business/POI icons (Target, Costco, restaurants, etc.) and
@@ -31,6 +33,34 @@ const MAP_STYLES = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9dae1' }] },
 ];
 
+// Tries device GPS first. Resolves { lat, lng } or rejects.
+function getGpsPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('geolocation-unsupported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: GPS_TIMEOUT_MS, maximumAge: 60000 }
+    );
+  });
+}
+
+// IP-based fallback for when GPS is denied/unavailable (e.g. desktop
+// browsers, or a user who declined the permission prompt). Approximate —
+// usually city-level accuracy, which is good enough for centering the map.
+async function getIpLocation() {
+  const res = await fetch('https://ipapi.co/json/');
+  if (!res.ok) throw new Error('ip-lookup-failed');
+  const data = await res.json();
+  if (data.latitude == null || data.longitude == null) {
+    throw new Error('ip-lookup-no-coords');
+  }
+  return { lat: data.latitude, lng: data.longitude };
+}
+
 export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, filterSignal, children }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -40,8 +70,14 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
 
   const mapRef = useRef(null);
 
-  const [center, setCenter] = useState(DEFAULT_CENTER);
+  // center starts as null on purpose — we do NOT render the map at any
+  // coordinate until we actually know one. This is what kills the
+  // "flashes to Boulder" behavior.
+  const [center, setCenter] = useState(null);
   const [hasRealLocation, setHasRealLocation] = useState(false);
+  const [locating, setLocating] = useState(true);
+  const [isApproximate, setIsApproximate] = useState(false);
+  const [isDefaultFallback, setIsDefaultFallback] = useState(false);
   const [showSearchArea, setShowSearchArea] = useState(false);
 
   const isProgrammaticMove = useRef(false);
@@ -61,26 +97,41 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     mapRef.current = null;
   }, []);
 
-  function centerOnMyLocation() {
-    if (!navigator.geolocation) return;
-    isProgrammaticMove.current = true;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setCenter(next);
-        setHasRealLocation(true);
-        mapRef.current?.panTo(next);
-        mapRef.current?.setZoom(14);
-        setTimeout(() => (isProgrammaticMove.current = false), 300);
-      },
-      () => {
-        isProgrammaticMove.current = false;
+  // Shared locate chain: GPS -> IP -> hardcoded default.
+  // isInitial=true means "first load, map isn't mounted yet, just set state."
+  // isInitial=false means "user tapped the locate button, map is mounted, pan to it."
+  const locate = useCallback(async (isInitial) => {
+    if (!isInitial) isProgrammaticMove.current = true;
+
+    const apply = (pos, approximate, defaultFallback = false) => {
+      setCenter(pos);
+      setHasRealLocation(true);
+      setIsApproximate(approximate);
+      setIsDefaultFallback(defaultFallback);
+      if (!isInitial && mapRef.current) {
+        mapRef.current.panTo(pos);
+        mapRef.current.setZoom(14);
       }
-    );
-  }
+    };
+
+    try {
+      const pos = await getGpsPosition();
+      apply(pos, false);
+    } catch {
+      try {
+        const pos = await getIpLocation();
+        apply(pos, true);
+      } catch {
+        apply(DEFAULT_CENTER, true, true);
+      }
+    } finally {
+      if (isInitial) setLocating(false);
+      else setTimeout(() => (isProgrammaticMove.current = false), 300);
+    }
+  }, []);
 
   useEffect(() => {
-    if (isLoaded) centerOnMyLocation();
+    if (isLoaded) locate(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded]);
 
@@ -166,10 +217,10 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
     );
   }
 
-  if (!isLoaded) {
+  if (!isLoaded || locating || !center) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-slate-200">
-        <p className="text-brand-gray text-sm">Loading map...</p>
+        <p className="text-brand-gray text-sm">Finding your location...</p>
       </div>
     );
   }
@@ -200,6 +251,12 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
         {children}
       </GoogleMap>
 
+      {isDefaultFallback && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white shadow-md rounded-full px-4 py-2 text-brand-gray text-xs">
+          Showing default location — enable location access for better results
+        </div>
+      )}
+
       {showSearchArea && (
         <button
           type="button"
@@ -213,7 +270,7 @@ export default function DealMap({ dealPoints = [], onSearchArea, focusPosition, 
 
       <button
         type="button"
-        onClick={centerOnMyLocation}
+        onClick={() => locate(false)}
         aria-label="Center on my location"
         className="cursor-pointer absolute bottom-4 right-4 w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-brand-navy"
       >
