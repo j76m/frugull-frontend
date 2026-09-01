@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Marker } from '@react-google-maps/api';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
@@ -286,6 +286,12 @@ export default function Search() {
         isSaved={selectedDeal ? savedDealIds.has(selectedDeal.id) : false}
         onToggleSave={handleToggleSave}
       />
+
+      <div className="text-center pb-4">
+        <Link to="/how-it-works" className="text-brand-link text-sm font-medium underline">
+          How Frugull Works
+        </Link>
+      </div>
     </AppLayout>
   );
 }

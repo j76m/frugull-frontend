@@ -7,6 +7,7 @@ import Search from './pages/Search';
 import CreateDeal from './pages/CreateDeal';
 import Profile from './pages/Profile';
 import Filters from './pages/Filters';
+import HowItWorks from './pages/HowItWorks';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
                 actual deal, not a login wall. */}
             <Route path="/" element={<Search />} />
             <Route path="/filters" element={<Filters />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
             <Route
               path="/create"
               element={
