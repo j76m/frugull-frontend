@@ -13,6 +13,21 @@ import { fetchSavedDeals, unsaveDeal } from '../api/savedDeals';
 import { fetchSubscriptionStatus } from '../api/subscriptions';
 import { fetchMyDeals, updateDeal, deleteDeal } from '../api/deals';
 
+function formatExpiration(expiresAt) {
+  if (!expiresAt) return null;
+  const date = new Date(expiresAt);
+  const now = new Date();
+  const diffMs = date - now;
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  if (diffDays <= 0) return `Expired ${dateLabel}`;
+  if (diffDays === 1) return `Expires tomorrow`;
+  if (diffDays <= 7) return `Expires in ${diffDays} days`;
+  return `Expires ${dateLabel}`;
+}
+
 export default function Profile() {
   const { user, logout } = useAuth();
   const currentTier = TIERS.find((t) => t.key === user?.rank_tier);
@@ -84,7 +99,7 @@ export default function Profile() {
   }
 
   async function handleDelete(dealId) {
-    if (!window.confirm('Delete this post? This can\'t be undone.')) return;
+    if (!window.confirm("Delete this post? This can't be undone.")) return;
     const prev = myDeals;
     setMyDeals((cur) => cur.filter((d) => d.id !== dealId));
     try {
@@ -136,33 +151,44 @@ export default function Profile() {
             {myDeals.map((deal) => {
               const isExpanded = expandedDealId === deal.id;
               const isEditing = editingDealId === deal.id;
+              const expirationLabel = formatExpiration(deal.expires_at);
 
               return (
                 <div key={deal.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setExpandedDealId(isExpanded ? null : deal.id)}
-                    className="cursor-pointer w-full flex items-center justify-between p-4 text-left"
+                    className="cursor-pointer w-full flex items-start justify-between gap-3 p-4 text-left"
                   >
-                    <div>
-                      <p className="text-brand-navy font-medium text-sm">{deal.business_name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-brand-navy font-medium text-sm truncate">{deal.business_name}</p>
                       <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                      {deal.caption && (
+                        <p className="text-brand-gray text-xs mt-1 line-clamp-1">{deal.caption}</p>
+                      )}
+                      {expirationLabel && (
+                        <p className="text-brand-link text-xs font-medium mt-1">{expirationLabel}</p>
+                      )}
                     </div>
-                    {isExpanded ? (
-                      <ChevronUp size={18} className="text-brand-gray flex-shrink-0" />
-                    ) : (
-                      <ChevronDown size={18} className="text-brand-gray flex-shrink-0" />
-                    )}
+                    <div className="flex-shrink-0 pt-0.5">
+                      {isExpanded ? (
+                        <ChevronUp size={18} className="text-brand-gray" />
+                      ) : (
+                        <ChevronDown size={18} className="text-brand-gray" />
+                      )}
+                    </div>
                   </button>
 
                   {isExpanded && (
                     <div className="px-4 pb-4">
                       {deal.image_url && (
-                        <img
-                          src={deal.image_url}
-                          alt={deal.business_name}
-                          className="w-full h-40 object-cover rounded-lg mb-3"
-                        />
+                        <div className="w-full bg-slate-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                          <img
+                            src={deal.image_url}
+                            alt={deal.business_name}
+                            className="w-full max-h-80 object-contain"
+                          />
+                        </div>
                       )}
 
                       {isEditing ? (
@@ -193,7 +219,9 @@ export default function Profile() {
                         </div>
                       ) : (
                         <>
-                          <p className="text-brand-gray text-sm mb-3">{deal.caption}</p>
+                          {deal.caption && (
+                            <p className="text-brand-gray text-sm mb-3 whitespace-pre-wrap">{deal.caption}</p>
+                          )}
                           <div className="flex gap-2">
                             <button
                               type="button"
