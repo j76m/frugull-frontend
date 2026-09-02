@@ -36,6 +36,7 @@ export default function Profile() {
   const [savedDeals, setSavedDeals] = useState([]);
   const [savedError, setSavedError] = useState('');
   const [selectedDealId, setSelectedDealId] = useState(null);
+  const [expandedSavedId, setExpandedSavedId] = useState(null);
 
   const [plan, setPlan] = useState(null);
   const [myDeals, setMyDeals] = useState([]);
@@ -261,22 +262,65 @@ export default function Profile() {
           </p>
         )}
 
-        {savedDeals.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
-            {savedDeals.map((deal) => (
-              <DealCard
-                key={deal.id}
-                onClick={() => setSelectedDealId(deal.id)}
-                deal={{
-                  id: deal.id,
-                  businessName: deal.business_name,
-                  subcategoryName: deal.subcategory_name,
-                  imageUrl: deal.image_url,
-                }}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col gap-3 px-4">
+          {savedDeals.map((deal) => {
+            const isExpanded = expandedSavedId === deal.id;
+
+            return (
+              <div key={deal.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpandedSavedId(isExpanded ? null : deal.id)}
+                  className="cursor-pointer w-full flex items-start justify-between gap-3 p-4 text-left"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-brand-navy font-medium text-sm truncate">{deal.business_name}</p>
+                    {deal.subcategory_name && (
+                      <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0 pt-0.5">
+                    {isExpanded ? (
+                      <ChevronUp size={18} className="text-brand-gray" />
+                    ) : (
+                      <ChevronDown size={18} className="text-brand-gray" />
+                    )}
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="px-4 pb-4">
+                    {deal.image_url && (
+                      <div className="w-full bg-slate-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={deal.image_url}
+                          alt={deal.business_name}
+                          className="w-full max-h-80 object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDealId(deal.id)}
+                        className="cursor-pointer flex-1 rounded-lg bg-slate-100 text-brand-navy text-sm font-medium py-2 hover:bg-slate-200"
+                      >
+                        View Details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUnsave(deal)}
+                        className="cursor-pointer flex-1 rounded-lg bg-red-50 text-red-600 text-sm font-medium py-2 hover:bg-red-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="max-w-sm mx-auto p-4">
