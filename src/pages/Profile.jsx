@@ -278,6 +278,9 @@ export default function Profile() {
                     {deal.subcategory_name && (
                       <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
                     )}
+                    {deal.caption && (
+                      <p className="text-brand-gray text-xs mt-1 line-clamp-1">{deal.caption}</p>
+                    )}
                   </div>
                   <div className="flex-shrink-0 pt-0.5">
                     {isExpanded ? (
@@ -298,6 +301,9 @@ export default function Profile() {
                           className="w-full max-h-80 object-contain"
                         />
                       </div>
+                    )}
+                    {deal.caption && (
+                      <p className="text-brand-gray text-sm mb-3 whitespace-pre-wrap">{deal.caption}</p>
                     )}
                     <div className="flex gap-2">
                       <button
