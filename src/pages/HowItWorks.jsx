@@ -23,12 +23,17 @@ export default function HowItWorks() {
             pin it to the map for others nearby to find. Our tagline says it best:{' '}
             <span className="font-semibold text-brand-navy">Local, Organized.</span>
           </p>
-          <p className="text-brand-gray text-sm leading-relaxed">
+          <p className="text-brand-gray text-sm leading-relaxed mb-3">
             I started Frugull because deals and local info are scattered across flyers,
             storefront windows, word of mouth, and social feeds that bury the good stuff under
             algorithms. Frugull puts it all in one place, organized by category and location,
             kept current because posts naturally expire and get refreshed — no stale coupons,
             no guessing if an offer's still good.
+          </p>
+          <p className="text-brand-gray text-sm italic">
+            Sincerely,
+            <br />
+            Jeremy aka "the Gullfather"
           </p>
         </section>
 
@@ -90,12 +95,6 @@ export default function HowItWorks() {
 
         <p className="text-brand-gray text-xs text-center pt-4">
           You can upgrade or manage your plan anytime from your Profile.
-        </p>
-
-        <p className="text-brand-gray text-sm text-center pt-6 italic">
-          Sincerely,
-          <br />
-          Jeremy aka "the Gullfather"
         </p>
       </div>
     </AppLayout>
