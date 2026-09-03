@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { submitReport } from '../api/reports';
+import { fetchVoteCounts, fetchMyVote, castVote, removeVote } from '../api/votes';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import logoImg from '../assets/frugull-logo.png';
 
 const REPORT_REASONS = [
@@ -89,6 +92,10 @@ async function getWatermarkedBlob(imageUrl) {
 }
 
 export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }) {
+  const { status } = useAuth();
+  const navigate = useNavigate();
+  const [voteCounts, setVoteCounts] = useState({ upvotes: 0, downvotes: 0 });
+  const [myVote, setMyVote] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0].value);
@@ -97,6 +104,20 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
   const [reportError, setReportError] = useState('');
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState('');
+
+  useEffect(() => {
+    if (!deal) return;
+    fetchVoteCounts(deal.id)
+      .then(setVoteCounts)
+      .catch(() => {});
+    if (status === 'authed') {
+      fetchMyVote(deal.id)
+        .then(setMyVote)
+        .catch(() => {});
+    } else {
+      setMyVote(null);
+    }
+  }, [deal, status]);
 
   if (!deal) return null;
 
@@ -179,6 +200,37 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
     }
   }
 
+  async function handleVote(voteType) {
+    if (status !== 'authed') {
+      navigate('/login');
+      return;
+    }
+    const previousVote = myVote;
+    const previousCounts = voteCounts;
+
+    // Tapping the same vote again removes it; tapping the other one switches.
+    if (myVote === voteType) {
+      setMyVote(null);
+      try {
+        const counts = await removeVote(deal.id);
+        setVoteCounts(counts);
+      } catch {
+        setMyVote(previousVote);
+        setVoteCounts(previousCounts);
+      }
+      return;
+    }
+
+    setMyVote(voteType);
+    try {
+      const counts = await castVote(deal.id, voteType);
+      setVoteCounts(counts);
+    } catch {
+      setMyVote(previousVote);
+      setVoteCounts(previousCounts);
+    }
+  }
+
   async function handleSubmitReport() {
     setReportSubmitting(true);
     setReportError('');
@@ -235,6 +287,29 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
 
           <p className="text-brand-navy text-sm mt-3">{deal.caption}</p>
           <p className="text-brand-gray text-xs mt-2">Posted by {deal.posted_by}</p>
+
+          <div className="flex items-center gap-3 mt-3">
+            <button
+              type="button"
+              onClick={() => handleVote('up')}
+              className={`cursor-pointer flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
+                myVote === 'up' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-brand-navy hover:bg-slate-200'
+              }`}
+            >
+              <ThumbsUp size={15} className={myVote === 'up' ? 'fill-green-700' : ''} />
+              {voteCounts.upvotes}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleVote('down')}
+              className={`cursor-pointer flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
+                myVote === 'down' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-brand-navy hover:bg-slate-200'
+              }`}
+            >
+              <ThumbsDown size={15} className={myVote === 'down' ? 'fill-red-700' : ''} />
+              {voteCounts.downvotes}
+            </button>
+          </div>
 
           <div className="grid grid-cols-2 gap-2 mt-4">
             <a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-brand-link text-white font-semibold py-3 cursor-pointer">
