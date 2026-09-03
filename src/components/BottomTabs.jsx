@@ -28,7 +28,7 @@ export default function BottomTabs() {
         ))}
       </div>
 
-      <div className="border-t border-slate-100 py-1.5 text-center text-[10px] text-brand-gray">
+      <div className="border-t border-slate-100 py-3 text-center text-[10px] text-brand-gray">
         © 2026 Frugull LLC ·{' '}
         <Link to="/terms" target="_blank" rel="noopener noreferrer" className="underline">
           Terms
