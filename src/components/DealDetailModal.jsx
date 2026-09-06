@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { X, MapPin, Phone, Globe, Share2, Mail, Link2, Flag, Heart, Download, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { submitReport } from '../api/reports';
 import { fetchVoteCounts, fetchMyVote, castVote, removeVote } from '../api/votes';
 import { useAuth } from '../context/AuthContext';
@@ -91,7 +91,16 @@ async function getWatermarkedBlob(imageUrl) {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 }
 
-export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }) {
+export default function DealDetailModal({
+  deal,
+  onClose,
+  isSaved,
+  onToggleSave,
+  carouselIndex,
+  carouselTotal,
+  onCarouselPrev,
+  onCarouselNext,
+}) {
   const { status } = useAuth();
   const navigate = useNavigate();
   const [voteCounts, setVoteCounts] = useState({ upvotes: 0, downvotes: 0 });
@@ -261,6 +270,30 @@ export default function DealDetailModal({ deal, onClose, isSaved, onToggleSave }
             >
               <Heart size={18} className={isSaved ? 'text-red-500 fill-red-500' : 'text-brand-navy'} />
             </button>
+
+            {carouselTotal > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onCarouselPrev}
+                  aria-label="Previous post"
+                  className="cursor-pointer w-9 h-9 rounded-full bg-white/90 flex items-center justify-center"
+                >
+                  <ChevronLeft size={18} className="text-brand-navy" />
+                </button>
+                <span className="bg-white/90 rounded-full px-3 py-1 text-xs font-medium text-brand-navy">
+                  {carouselIndex + 1} / {carouselTotal}
+                </span>
+                <button
+                  type="button"
+                  onClick={onCarouselNext}
+                  aria-label="Next post"
+                  className="cursor-pointer w-9 h-9 rounded-full bg-white/90 flex items-center justify-center"
+                >
+                  <ChevronRight size={18} className="text-brand-navy" />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
