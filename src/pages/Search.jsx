@@ -7,8 +7,10 @@ import SeagullMascot from '../components/SeagullMascot';
 import DealCard from '../components/DealCard';
 import DealMap from '../components/DealMap';
 import DealDetailModal from '../components/DealDetailModal';
+import DealCarouselModal from '../components/DealCarouselModal';
 import MapLegend from '../components/MapLegend';
 import { fetchDeals } from '../api/deals';
+import { fetchDealsAtLocation } from '../api/dealsAtLocation';
 import { fetchSavedDealIds, saveDeal, unsaveDeal } from '../api/savedDeals';
 import { useFilters } from '../context/FilterContext';
 import { useAuth } from '../context/AuthContext';
@@ -73,6 +75,7 @@ export default function Search() {
   const [allDeals, setAllDeals] = useState([]);
   const [dealsError, setDealsError] = useState('');
   const [selectedDealId, setSelectedDealId] = useState(null);
+  const [locationDeals, setLocationDeals] = useState(null);
   const [focusPosition, setFocusPosition] = useState(null);
   const [savedDealIds, setSavedDealIds] = useState(new Set());
   // null = All, 'deal' = Deals only, 'info' = General Info only.
@@ -125,6 +128,29 @@ export default function Search() {
         else next.delete(deal.id);
         return next;
       });
+    }
+  }
+
+  // Tapping any pin checks what's really stacked at that business+
+  // subcategory (respecting the active All/Deal/Info filter) - if more
+  // than one post is active there, opens the carousel; if only one,
+  // skips straight to the regular single-deal view.
+  async function handleMarkerClick(deal) {
+    try {
+      const atLocation = await fetchDealsAtLocation(
+        deal.business_id,
+        deal.subcategory_id,
+        postTypeFilter
+      );
+      if (atLocation.length > 1) {
+        setLocationDeals(atLocation);
+      } else {
+        setSelectedDealId(deal.id);
+      }
+    } catch {
+      // Fallback: if the lookup fails for any reason, still show the
+      // single deal that was actually tapped rather than nothing at all.
+      setSelectedDealId(deal.id);
     }
   }
 
@@ -257,7 +283,7 @@ export default function Search() {
                   key={deal.id}
                   position={{ lat: deal.latitude, lng: deal.longitude }}
                   title={deal.business_name}
-                  onClick={() => setSelectedDealId(deal.id)}
+                  onClick={() => handleMarkerClick(deal)}
                   icon={getMarkerIcon(deal)}
                 />
               ))}
@@ -305,12 +331,21 @@ export default function Search() {
         </div>
       )}
 
-      <DealDetailModal
-        deal={selectedDeal}
-        onClose={() => setSelectedDealId(null)}
-        isSaved={selectedDeal ? savedDealIds.has(selectedDeal.id) : false}
-        onToggleSave={handleToggleSave}
-      />
+      {locationDeals ? (
+        <DealCarouselModal
+          deals={locationDeals}
+          onClose={() => setLocationDeals(null)}
+          savedDealIds={savedDealIds}
+          onToggleSave={handleToggleSave}
+        />
+      ) : (
+        <DealDetailModal
+          deal={selectedDeal}
+          onClose={() => setSelectedDealId(null)}
+          isSaved={selectedDeal ? savedDealIds.has(selectedDeal.id) : false}
+          onToggleSave={handleToggleSave}
+        />
+      )}
 
       <div className="text-center pb-4">
         <Link to="/how-it-works" className="text-brand-link text-sm font-medium underline">
