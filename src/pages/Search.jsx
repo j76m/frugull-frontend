@@ -21,6 +21,38 @@ const POST_TYPE_OPTIONS = [
   { value: 'info', label: 'Info' },
 ];
 
+// Custom SVG paths (Google Maps only ships CIRCLE as a built-in shape;
+// square and star need hand-defined paths). Both are normalized to roughly
+// fit within the same -1..1 unit bounds as the built-in CIRCLE, so a
+// shared "scale" value keeps all three shapes visually comparable in size.
+const SQUARE_PATH = 'M -0.85,-0.85 0.85,-0.85 0.85,0.85 -0.85,0.85 Z';
+const STAR_PATH =
+  'M 0,-1 0.235,-0.324 0.951,-0.309 0.380,0.124 0.588,0.809 0,0.4 -0.588,0.809 -0.380,0.124 -0.951,-0.309 -0.235,-0.324 Z';
+
+// Shape communicates tier/post-type, color always communicates category -
+// the two are independent so category recognition never breaks, even for
+// an Unlimited-tier post. Unlimited always renders as a star regardless of
+// post_type (Deal or Info) - which specific type it is is one tap away in
+// the detail view, so the star doesn't need to also carry that distinction.
+function getMarkerIcon(deal) {
+  const color = getCategoryColor(deal.category_name);
+  const base = {
+    scale: 9,
+    fillColor: color,
+    fillOpacity: 1,
+    strokeColor: '#FFFFFF',
+    strokeWeight: 2,
+  };
+
+  if (deal.posted_via === 'unlimited') {
+    return { ...base, path: STAR_PATH, strokeWeight: 1.5 };
+  }
+  if (deal.post_type === 'info') {
+    return { ...base, path: SQUARE_PATH };
+  }
+  return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE };
+}
+
 export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
@@ -226,14 +258,7 @@ export default function Search() {
                   position={{ lat: deal.latitude, lng: deal.longitude }}
                   title={deal.business_name}
                   onClick={() => setSelectedDealId(deal.id)}
-                  icon={{
-                    path: window.google?.maps?.SymbolPath?.CIRCLE,
-                    scale: 9,
-                    fillColor: getCategoryColor(deal.category_name),
-                    fillOpacity: 1,
-                    strokeColor: '#FFFFFF',
-                    strokeWeight: 2,
-                  }}
+                  icon={getMarkerIcon(deal)}
                 />
               ))}
             </DealMap>
