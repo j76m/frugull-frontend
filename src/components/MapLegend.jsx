@@ -35,7 +35,7 @@ export default function MapLegend({ categories }) {
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-brand-gray flex-shrink-0">★</span>
-          <span>Frugull Unlimited</span>
+          <span>Featured</span>
         </div>
       </div>
     </div>
