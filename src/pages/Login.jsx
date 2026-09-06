@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import * as authApi from '../api/auth';
 import Wordmark from '../components/Wordmark';
-import taglineImg from '../assets/tagline.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -58,7 +57,9 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-2">
           <Wordmark className="h-24 mx-auto" />
-          <img src={taglineImg} alt="Your local deal finder" className="h-32 mx-auto mt-2" />
+          <p className="text-brand-navy font-semibold text-xl tracking-wide mt-2">
+            Local, Organized.
+          </p>
         </div>
 
         {step === 'email' && (
