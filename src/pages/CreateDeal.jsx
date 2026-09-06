@@ -73,6 +73,7 @@ export default function CreateDeal() {
   const [businessRecord, setBusinessRecord] = useState(null);
   const [businessError, setBusinessError] = useState('');
 
+  const [locationMode, setLocationMode] = useState('search'); // 'search' | 'gps' - for GPS-enabled categories only
   const [gpsStandName, setGpsStandName] = useState('');
   const [gpsCoords, setGpsCoords] = useState(null);
   const [gpsBusinessError, setGpsBusinessError] = useState('');
@@ -170,6 +171,7 @@ export default function CreateDeal() {
     setBusiness(null);
     setBusinessRecord(null);
     setBusinessError('');
+    setLocationMode('search');
     setGpsStandName('');
     setGpsCoords(null);
     setGpsBusinessError('');
@@ -350,11 +352,47 @@ export default function CreateDeal() {
         {selectedCategory && (
           <div>
             {usesGpsLocation ? (
-              <GpsLocationCapture
-                name={gpsStandName}
-                onNameChange={setGpsStandName}
-                onLocationReady={setGpsCoords}
-              />
+              <div>
+                <div className="flex justify-center gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setLocationMode('search')}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                      locationMode === 'search'
+                        ? 'bg-brand-navy text-white border-brand-navy'
+                        : 'bg-white text-brand-navy border-brand-link'
+                    }`}
+                  >
+                    Search for it
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLocationMode('gps')}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                      locationMode === 'gps'
+                        ? 'bg-brand-navy text-white border-brand-navy'
+                        : 'bg-white text-brand-navy border-brand-link'
+                    }`}
+                  >
+                    Use my location
+                  </button>
+                </div>
+
+                {locationMode === 'search' ? (
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-1">Business</label>
+                    <BusinessSearchInput onSelect={handleBusinessSelect} selectedName={business?.name} />
+                    {business && <p className="text-brand-gray text-xs mt-1">{business.address}</p>}
+                    {businessError && <p className="text-red-500 text-xs mt-1">{businessError}</p>}
+                  </div>
+                ) : (
+                  <GpsLocationCapture
+                    name={gpsStandName}
+                    onNameChange={setGpsStandName}
+                    onLocationReady={setGpsCoords}
+                  />
+                )}
+              </div>
             ) : (
               <div>
                 <label className="block text-sm text-slate-600 mb-1">Business</label>
