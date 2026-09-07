@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import TopNav from '../components/TopNav';
-import CATEGORIES from '../data/categories';
+import { fetchCategories } from '../api/categories';
 import { fetchDeals } from '../api/deals';
 import { useFilters } from '../context/FilterContext';
 
@@ -38,28 +38,42 @@ export default function Filters() {
     toggleDay,
     clearSelections,
   } = useFilters();
+
+  // Live taxonomy from the backend (was previously a static frontend file
+  // that drifted out of sync with real categories/subcategories over time).
+  const [categories, setCategories] = useState([]);
   const [deals, setDeals] = useState(null); // null = still loading
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
-    fetchDeals()
-      .then(setDeals)
-      .catch(() => setLoadError('Could not load current deal types.'));
+    Promise.all([fetchCategories(), fetchDeals()])
+      .then(([categoriesResult, dealsResult]) => {
+        setCategories(categoriesResult);
+        setDeals(dealsResult);
+      })
+      .catch(() => setLoadError('Could not load current deal types.'))
+      .finally(() => setLoading(false));
   }, []);
 
   // Only show categories/subcategories that have at least one active deal
-  // right now — showing the full static taxonomy here would let people
-  // filter down to something with zero results, which is misleading. The
-  // full list still lives on the Post screen so people can post into a
+  // right now — showing the full taxonomy here would let people filter
+  // down to something with zero results, which is misleading. The full
+  // list still lives on the Post screen so people can post into a
   // brand-new subcategory even before anyone else has.
   const ACTIVE_CATEGORIES = useMemo(() => {
-    if (!deals) return [];
+    if (loading || !deals) return [];
     const activeNames = new Set(deals.map((d) => d.subcategory_name));
-    return CATEGORIES.map((cat) => ({
-      ...cat,
-      subcategories: cat.subcategories.filter((s) => activeNames.has(s)),
-    })).filter((cat) => cat.subcategories.length > 0);
-  }, [deals]);
+    return categories
+      .map((cat) => ({
+        ...cat,
+        // Subcategories arrive pre-sorted from the backend (alphabetical,
+        // with "Other" always pinned last) — filtering preserves that
+        // order, so no re-sort happens here.
+        subcategories: cat.subcategories.filter((s) => activeNames.has(s.name)),
+      }))
+      .filter((cat) => cat.subcategories.length > 0);
+  }, [deals, categories, loading]);
 
   // Starts pre-expanded for any category that already has a selection
   // (so arriving on this screen shows what's active), but after that it's
@@ -69,13 +83,13 @@ export default function Filters() {
   useEffect(() => {
     const initial = new Set();
     ACTIVE_CATEGORIES.forEach((cat) => {
-      if (cat.subcategories.some((i) => selectedSubs.has(i))) initial.add(cat.name);
+      if (cat.subcategories.some((s) => selectedSubs.has(s.name))) initial.add(cat.name);
     });
     setExpanded(initial);
     // Only run this once, right when the active category list first
     // becomes available — not on every selection change afterward.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deals !== null]);
+  }, [!loading]);
 
   function toggleExpanded(name) {
     setExpanded((prev) => {
@@ -87,11 +101,12 @@ export default function Filters() {
   }
 
   function toggleCategoryAll(items) {
-    const allSelectedInGroup = items.every((s) => selectedSubs.has(s));
-    items.forEach((item) => {
-      const isSelected = selectedSubs.has(item);
-      if (allSelectedInGroup && isSelected) toggleSub(item);
-      if (!allSelectedInGroup && !isSelected) toggleSub(item);
+    const names = items.map((s) => s.name);
+    const allSelectedInGroup = names.every((n) => selectedSubs.has(n));
+    names.forEach((name) => {
+      const isSelected = selectedSubs.has(name);
+      if (allSelectedInGroup && isSelected) toggleSub(name);
+      if (!allSelectedInGroup && !isSelected) toggleSub(name);
     });
   }
 
@@ -164,11 +179,11 @@ export default function Filters() {
 
         {loadError && <p className="text-red-500 text-sm text-center mt-4">{loadError}</p>}
 
-        {deals === null && !loadError && (
+        {loading && !loadError && (
           <p className="text-brand-gray text-sm text-center mt-4">Loading current deal types...</p>
         )}
 
-        {deals !== null && ACTIVE_CATEGORIES.length === 0 && !loadError && (
+        {!loading && ACTIVE_CATEGORIES.length === 0 && !loadError && (
           <p className="text-brand-gray text-sm text-center mt-4">
             No active deals yet — check back soon.
           </p>
@@ -176,14 +191,13 @@ export default function Filters() {
 
         <div className="space-y-1">
           {ACTIVE_CATEGORIES.map((cat) => {
-            const sortedItems = [...cat.subcategories].sort((a, b) => a.localeCompare(b));
-            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s));
-            const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s)).length;
+            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s.name));
+            const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s.name)).length;
             const hasSelections = selectedCount > 0;
             const isExpanded = expanded.has(cat.name);
 
             return (
-              <div key={cat.name} className="border-b border-slate-100">
+              <div key={cat.id} className="border-b border-slate-100">
                 <button
                   type="button"
                   onClick={() => toggleExpanded(cat.name)}
@@ -224,15 +238,15 @@ export default function Filters() {
                       </span>
                     </label>
 
-                    {sortedItems.map((sub) => (
-                      <label key={sub} className="flex items-center gap-2 py-1 cursor-pointer">
+                    {cat.subcategories.map((sub) => (
+                      <label key={sub.id} className="flex items-center gap-2 py-1 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={selectedSubs.has(sub)}
-                          onChange={() => toggleSub(sub)}
+                          checked={selectedSubs.has(sub.name)}
+                          onChange={() => toggleSub(sub.name)}
                           className="w-4 h-4 accent-brand-link cursor-pointer"
                         />
-                        <span className="text-brand-navy text-sm">{sub}</span>
+                        <span className="text-brand-navy text-sm">{sub.name}</span>
                       </label>
                     ))}
                   </div>
