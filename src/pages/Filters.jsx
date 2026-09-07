@@ -61,16 +61,20 @@ export default function Filters() {
   // down to something with zero results, which is misleading. The full
   // list still lives on the Post screen so people can post into a
   // brand-new subcategory even before anyone else has.
-  const ACTIVE_CATEGORIES = useMemo(() => {
+    const ACTIVE_CATEGORIES = useMemo(() => {
     if (loading || !deals) return [];
-    const activeNames = new Set(deals.map((d) => d.subcategory_name));
+    const activeIds = new Set(deals.map((d) => d.subcategory_id));
     return categories
       .map((cat) => ({
         ...cat,
         // Subcategories arrive pre-sorted from the backend (alphabetical,
         // with "Other" always pinned last) — filtering preserves that
-        // order, so no re-sort happens here.
-        subcategories: cat.subcategories.filter((s) => activeNames.has(s.name)),
+        // order, so no re-sort happens here. Matched by id, not name -
+        // "Other" (and potentially other future duplicate names) exists
+        // as a distinct row per category, so name-matching would
+        // incorrectly treat any category's "Other" as active the moment
+        // ANY category has an active "Other" deal.
+        subcategories: cat.subcategories.filter((s) => activeIds.has(s.id)),
       }))
       .filter((cat) => cat.subcategories.length > 0);
   }, [deals, categories, loading]);
