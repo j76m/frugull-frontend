@@ -83,7 +83,7 @@ export default function Filters() {
   useEffect(() => {
     const initial = new Set();
     ACTIVE_CATEGORIES.forEach((cat) => {
-      if (cat.subcategories.some((s) => selectedSubs.has(s.name))) initial.add(cat.name);
+      if (cat.subcategories.some((s) => selectedSubs.has(s.id))) initial.add(cat.name);
     });
     setExpanded(initial);
     // Only run this once, right when the active category list first
@@ -101,12 +101,12 @@ export default function Filters() {
   }
 
   function toggleCategoryAll(items) {
-    const names = items.map((s) => s.name);
-    const allSelectedInGroup = names.every((n) => selectedSubs.has(n));
-    names.forEach((name) => {
-      const isSelected = selectedSubs.has(name);
-      if (allSelectedInGroup && isSelected) toggleSub(name);
-      if (!allSelectedInGroup && !isSelected) toggleSub(name);
+    const ids = items.map((s) => s.id);
+    const allSelectedInGroup = ids.every((id) => selectedSubs.has(id));
+    ids.forEach((id) => {
+      const isSelected = selectedSubs.has(id);
+      if (allSelectedInGroup && isSelected) toggleSub(id);
+      if (!allSelectedInGroup && !isSelected) toggleSub(id);
     });
   }
 
@@ -191,8 +191,8 @@ export default function Filters() {
 
         <div className="space-y-1">
           {ACTIVE_CATEGORIES.map((cat) => {
-            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s.name));
-            const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s.name)).length;
+            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s.id));
+            const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s.id)).length;
             const hasSelections = selectedCount > 0;
             const isExpanded = expanded.has(cat.name);
 
@@ -242,8 +242,8 @@ export default function Filters() {
                       <label key={sub.id} className="flex items-center gap-2 py-1 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={selectedSubs.has(sub.name)}
-                          onChange={() => toggleSub(sub.name)}
+                          checked={selectedSubs.has(sub.id)}
+                          onChange={() => toggleSub(sub.id)}
                           className="w-4 h-4 accent-brand-link cursor-pointer"
                         />
                         <span className="text-brand-navy text-sm">{sub.name}</span>

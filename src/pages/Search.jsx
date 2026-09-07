@@ -181,7 +181,7 @@ export default function Search() {
     setFocusPosition(city.position);
   }
 
-  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_name)))
+  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_id)))
     .filter(
       (deal) =>
         selectedDiscountTags.size === 0 ||
