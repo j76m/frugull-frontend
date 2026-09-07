@@ -319,6 +319,18 @@ export default function DealDetailModal({
           {locationLine && <p className="text-brand-gray text-sm mt-1">{locationLine}</p>}
 
           <p className="text-brand-navy text-sm mt-3">{deal.caption}</p>
+          {deal.expires_at && (
+            <p className="text-brand-link text-xs font-medium mt-2">
+              {deal.is_event_date
+                ? `Date of: ${new Date(
+                    new Date(deal.expires_at).getTime() - 24 * 60 * 60 * 1000
+                  ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : `Runs until: ${new Date(deal.expires_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}`}
+            </p>
+          )}
           <p className="text-brand-gray text-xs mt-2">Posted by {deal.posted_by}</p>
 
           <div className="flex items-center gap-3 mt-3">
