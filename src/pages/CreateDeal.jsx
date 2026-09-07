@@ -86,6 +86,12 @@ export default function CreateDeal() {
   const [allowanceLoading, setAllowanceLoading] = useState(false);
   const [durationDays, setDurationDays] = useState(null);
 
+  // "Date of" mode - currently Recreation-only. When active, the poster
+  // picks the event's actual date instead of a "runs until" date, and the
+  // backend automatically expires the post at midnight the following day.
+  const [isEventDate, setIsEventDate] = useState(false);
+  const [eventDate, setEventDate] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -106,6 +112,7 @@ export default function CreateDeal() {
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
+  const allowsEventDate = selectedCategory?.name === 'Recreation';
 
   useEffect(() => {
     if (!usesGpsLocation) return;
@@ -174,6 +181,8 @@ export default function CreateDeal() {
     setGpsStandName('');
     setGpsCoords(null);
     setGpsBusinessError('');
+    setIsEventDate(false);
+    setEventDate('');
   }
 
   function toggleDiscountTag(value) {
@@ -227,6 +236,8 @@ export default function CreateDeal() {
         validDaysOfWeek: validDays.length > 0 ? validDays : undefined,
         requestedDurationDays: durationDays || undefined,
         postType,
+        isEventDate: allowsEventDate && isEventDate,
+        eventDate: allowsEventDate && isEventDate ? eventDate : undefined,
       });
 
       try {
@@ -483,34 +494,79 @@ export default function CreateDeal() {
         </div>
 
         <div>
-          <label className="block text-sm text-slate-600 mb-2">Runs until</label>
-          {!businessRecord || !subcategoryId ? (
-            <p className="text-brand-gray text-sm">
-              Select a location and subcategory to see how long this post can run.
-            </p>
-          ) : allowanceLoading ? (
-            <p className="text-brand-gray text-sm">Checking...</p>
-          ) : allowance?.method === 'free' ? (
-            <p className="text-brand-navy text-sm">
-              {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
-            </p>
-          ) : allowance ? (
+          {allowsEventDate && (
+            <div className="flex justify-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setIsEventDate(false)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  !isEventDate
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                Runs until
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEventDate(true)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  isEventDate
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                Date of
+              </button>
+            </div>
+          )}
+
+          {allowsEventDate && isEventDate ? (
             <>
+              <label className="block text-sm text-slate-600 mb-2">Date of event</label>
               <input
                 type="date"
-                value={selectedDate ? toDateInputValue(selectedDate) : ''}
+                value={eventDate}
                 min={toDateInputValue(tomorrow)}
-                max={maxDate ? toDateInputValue(maxDate) : undefined}
-                onChange={handleDurationDateChange}
+                onChange={(e) => setEventDate(e.target.value)}
                 className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
               />
               <p className="text-brand-gray text-xs mt-1">
-                Up to {allowance.maxDurationDays} days from today
-                {allowance.method === 'credit' ? ' (using 1 credit)' : ' (Frugull Unlimited)'}.
+                This post will automatically expire at midnight the day after the event.
               </p>
             </>
           ) : (
-            <p className="text-red-500 text-sm">Could not check posting options. Try again.</p>
+            <>
+              <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+              {!businessRecord || !subcategoryId ? (
+                <p className="text-brand-gray text-sm">
+                  Select a location and subcategory to see how long this post can run.
+                </p>
+              ) : allowanceLoading ? (
+                <p className="text-brand-gray text-sm">Checking...</p>
+              ) : allowance?.method === 'free' ? (
+                <p className="text-brand-navy text-sm">
+                  {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
+                </p>
+              ) : allowance ? (
+                <>
+                  <input
+                    type="date"
+                    value={selectedDate ? toDateInputValue(selectedDate) : ''}
+                    min={toDateInputValue(tomorrow)}
+                    max={maxDate ? toDateInputValue(maxDate) : undefined}
+                    onChange={handleDurationDateChange}
+                    className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                  />
+                  <p className="text-brand-gray text-xs mt-1">
+                    Up to {allowance.maxDurationDays} days from today
+                    {allowance.method === 'credit' ? ' (using 1 credit)' : ' (Frugull Unlimited)'}.
+                  </p>
+                </>
+              ) : (
+                <p className="text-red-500 text-sm">Could not check posting options. Try again.</p>
+              )}
+            </>
           )}
         </div>
 

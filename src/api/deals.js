@@ -28,6 +28,8 @@ export async function createDeal({
   validDaysOfWeek,
   discountTags,
   postType,
+  isEventDate,
+  eventDate,
 }) {
   const { data } = await client.post('/deals', {
     businessId,
@@ -39,6 +41,8 @@ export async function createDeal({
     validDaysOfWeek,
     discountTags,
     postType,
+    isEventDate,
+    eventDate,
   });
   return data.deal ?? data;
 }
