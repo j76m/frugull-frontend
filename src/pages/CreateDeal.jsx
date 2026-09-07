@@ -95,7 +95,6 @@ export default function CreateDeal() {
       .then((results) => {
         const HIDDEN_CATEGORIES = new Set([
           'For Sale by Owner',
-          'Employment',
           'Public Art',
           'Property Rental',
           'Home Care',
