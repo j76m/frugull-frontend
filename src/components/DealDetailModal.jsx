@@ -315,7 +315,11 @@ export default function DealDetailModal({
           )}
 
           <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>
-          <p className="text-brand-link font-medium text-sm mt-0.5">{deal.subcategory_name}</p>
+          <p className="text-brand-link font-medium text-sm mt-0.5">
+            {deal.all_subcategory_names?.length > 1
+              ? deal.all_subcategory_names.join(' · ')
+              : deal.subcategory_name}
+          </p>
           {locationLine && <p className="text-brand-gray text-sm mt-1">{locationLine}</p>}
 
           <p className="text-brand-navy text-sm mt-3">{deal.caption}</p>
