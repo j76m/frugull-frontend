@@ -10,6 +10,7 @@ import { findOrCreateBusiness } from '../api/businesses';
 import { getUploadUrl, uploadFileToS3 } from '../api/upload';
 import { createDeal, fetchPreviewAllowance } from '../api/deals';
 import { fetchMe } from '../api/auth';
+import { fetchSubscriptionStatus } from '../api/subscriptions';
 import { useAuth } from '../context/AuthContext';
 
 const DISCOUNT_TAGS = [
@@ -60,8 +61,14 @@ export default function CreateDeal() {
   const { setUser } = useAuth();
   const fileInputRef = useRef(null);
 
+  const [plan, setPlan] = useState(null); // 'unlimited' | 'free' - gates multi-tagging UI
   const [categories, setCategories] = useState([]);
   const [categoriesError, setCategoriesError] = useState('');
+
+  // Multi-tagging (Unlimited only): one post, additional category/
+  // subcategory pairs beyond the primary one above. Each entry:
+  // { categoryId, subcategoryId }.
+  const [additionalTags, setAdditionalTags] = useState([]);
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
@@ -108,6 +115,10 @@ export default function CreateDeal() {
         setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
       })
       .catch(() => setCategoriesError('Could not load categories.'));
+
+    fetchSubscriptionStatus()
+      .then((sub) => setPlan(sub?.plan ?? 'free'))
+      .catch(() => setPlan('free'));
   }, []);
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
@@ -171,6 +182,26 @@ export default function CreateDeal() {
     }
   }
 
+  function addAnotherCategory() {
+    setAdditionalTags((prev) => [...prev, { categoryId: '', subcategoryId: '' }]);
+  }
+
+  function removeAdditionalTag(index) {
+    setAdditionalTags((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateAdditionalTagCategory(index, newCategoryId) {
+    setAdditionalTags((prev) =>
+      prev.map((tag, i) => (i === index ? { categoryId: newCategoryId, subcategoryId: '' } : tag))
+    );
+  }
+
+  function updateAdditionalTagSubcategory(index, newSubcategoryId) {
+    setAdditionalTags((prev) =>
+      prev.map((tag, i) => (i === index ? { ...tag, subcategoryId: newSubcategoryId } : tag))
+    );
+  }
+
   function handleCategoryChange(e) {
     setCategoryId(e.target.value);
     setSubcategoryId('');
@@ -183,6 +214,7 @@ export default function CreateDeal() {
     setGpsBusinessError('');
     setIsEventDate(false);
     setEventDate('');
+    setAdditionalTags([]);
   }
 
   function toggleDiscountTag(value) {
@@ -226,6 +258,10 @@ export default function CreateDeal() {
       const { uploadUrl, publicUrl } = await getUploadUrl(photoFile.type);
       await uploadFileToS3(uploadUrl, photoFile);
 
+      const validAdditionalTags = additionalTags
+        .filter((t) => t.categoryId && t.subcategoryId)
+        .map((t) => ({ categoryId: Number(t.categoryId), subcategoryId: Number(t.subcategoryId) }));
+
       await createDeal({
         businessId: businessRecord.id,
         categoryId: Number(categoryId),
@@ -238,6 +274,7 @@ export default function CreateDeal() {
         postType,
         isEventDate: allowsEventDate && isEventDate,
         eventDate: allowsEventDate && isEventDate ? eventDate : undefined,
+        additionalTags: plan === 'unlimited' && validAdditionalTags.length > 0 ? validAdditionalTags : undefined,
       });
 
       try {
@@ -358,6 +395,67 @@ export default function CreateDeal() {
           </div>
         </div>
         {categoriesError && <p className="text-red-500 text-sm">{categoriesError}</p>}
+
+        {/* Multi-tagging (Unlimited only): one photo/post can advertise
+            multiple, unrelated offerings (e.g. a sign showing both a food
+            special and a drink special) by tagging additional category/
+            subcategory pairs onto this same post. */}
+        {plan === 'unlimited' && categoryId && (
+          <div className="space-y-3">
+            {additionalTags.map((tag, index) => {
+              const tagCategory = categories.find((c) => String(c.id) === String(tag.categoryId));
+              return (
+                <div key={index} className="grid grid-cols-2 gap-3 items-start bg-slate-50 rounded-xl p-3">
+                  <div>
+                    <label className="block text-xs text-slate-600 mb-1">Also tag as</label>
+                    <select
+                      value={tag.categoryId}
+                      onChange={(e) => updateAdditionalTagCategory(index, e.target.value)}
+                      className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-link"
+                    >
+                      <option value="">Select category...</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <select
+                      value={tag.subcategoryId}
+                      onChange={(e) => updateAdditionalTagSubcategory(index, e.target.value)}
+                      disabled={!tagCategory}
+                      className="flex-1 rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-link disabled:bg-slate-100 disabled:text-brand-gray mt-5"
+                    >
+                      <option value="">Select...</option>
+                      {tagCategory?.subcategories.map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeAdditionalTag(index)}
+                      className="cursor-pointer text-red-500 text-sm font-medium mt-5 px-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={addAnotherCategory}
+              className="text-brand-link text-sm font-medium cursor-pointer hover:underline"
+            >
+              + Add another category
+            </button>
+          </div>
+        )}
 
         {selectedCategory && (
           <div>
