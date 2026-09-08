@@ -163,7 +163,11 @@ export default function Profile() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-brand-navy font-medium text-sm truncate">{deal.business_name}</p>
-                      <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                      <p className="text-brand-gray text-xs">
+                        {deal.all_category_names?.length > 1
+                          ? deal.all_category_names.join(' · ')
+                          : deal.subcategory_name}
+                      </p>
                       {deal.caption && (
                         <p className="text-brand-gray text-xs mt-1 line-clamp-1">{deal.caption}</p>
                       )}
