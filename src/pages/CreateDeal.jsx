@@ -416,14 +416,26 @@ export default function CreateDeal() {
         )}
 
         <div>
-          <label className="block text-sm text-slate-600 mb-1">Description</label>
+          <label className="block text-sm text-slate-600 mb-1">
+            Description <span className="text-red-500">*</span>
+          </label>
+          <label className="flex items-center gap-2 mb-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={caption === 'See photo'}
+              onChange={(e) => setCaption(e.target.checked ? 'See photo' : '')}
+              className="w-4 h-4 accent-brand-link cursor-pointer"
+            />
+            <span className="text-brand-gray text-sm">Photo says it all — just use "See photo"</span>
+          </label>
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={3}
             maxLength={500}
             placeholder="What's the deal?"
-            className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link resize-none"
+            disabled={caption === 'See photo'}
+            className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link resize-none disabled:bg-slate-100 disabled:text-brand-gray"
           />
         </div>
 
