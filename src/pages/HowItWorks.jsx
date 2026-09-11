@@ -37,7 +37,8 @@ export default function HowItWorks() {
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>Anyone can search and browse posts for free — no account needed</li>
             <li>To create a post or save one for later, make a free account — just verify your email</li>
-            <li>Vote on posts to help others know what's current, and earn points as you post</li>
+            <li>Earn 1 point for every post you create — good for Frugull exclusive deals and merch</li>
+            <li>Vote on posts to help others know what's current</li>
           </ul>
         </section>
 
