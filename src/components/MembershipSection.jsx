@@ -154,22 +154,13 @@ export default function MembershipSection() {
               {credits ?? 0} credit{credits === 1 ? '' : 's'} available · each covers one
               business + subcategory slot for up to 30 days
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleBuyCredits('five')}
-                disabled={busy}
-                className="flex-1 rounded-lg border-2 border-brand-navy text-brand-navy font-medium py-2 text-sm hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
-              >
-                Buy 5 — $10
-              </button>
-              <button
-                onClick={() => handleBuyCredits('ten')}
-                disabled={busy}
-                className="flex-1 rounded-lg border-2 border-brand-navy text-brand-navy font-medium py-2 text-sm hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
-              >
-                Buy 10 — $20
-              </button>
-            </div>
+             <button
+              onClick={() => handleBuyCredits('five')}
+              disabled={busy}
+              className="w-full rounded-lg border-2 border-brand-navy text-brand-navy font-medium py-2 text-sm hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
+            >
+              Buy 5 — $15
+            </button>
           </div>
         </div>
       </div>

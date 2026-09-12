@@ -52,7 +52,7 @@ export default function HowItWorks() {
 
         <section>
           <h2 className="text-lg font-semibold text-brand-navy mb-2">
-            Post by Credits — 5 for $10, or 10 for $20
+            Post by Credits — 5 for $15
           </h2>
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>One live post per business, per subcategory</li>
