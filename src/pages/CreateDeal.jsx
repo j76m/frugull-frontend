@@ -637,7 +637,7 @@ export default function CreateDeal() {
               <input
                 type="date"
                 value={eventDate}
-                min={toDateInputValue(tomorrow)}
+                min={toDateInputValue(today)}
                 onChange={(e) => setEventDate(e.target.value)}
                 className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
               />
