@@ -90,6 +90,9 @@ export default function RankProgress({ points }) {
               >
                 {tier.label}
               </span>
+              <span className="text-[9px] text-brand-gray leading-tight whitespace-nowrap">
+                ({tier.threshold})
+              </span>
             </div>
           );
         })}
