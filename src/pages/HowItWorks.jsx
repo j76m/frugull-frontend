@@ -72,7 +72,7 @@ export default function HowItWorks() {
               Tag one post with multiple subcategories (e.g., one sign showing a food deal
               and a drink special can appear under both)
             </li>
-            <li>Unlimited posts get priority placement on the map over Credits and Free</li>
+            <li>Unlimited posts get priority search placement over Credits and Free</li>
           </ul>
         </section>
 
