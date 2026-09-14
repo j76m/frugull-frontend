@@ -202,11 +202,31 @@ export default function Search() {
     })
     .filter((deal) => postTypeFilter === null || deal.post_type === postTypeFilter);
 
+  // The list view shows one row per actual POST, not one row per tag -
+  // unlike the map, where a multi-tagged deal correctly needs a separate
+  // pin per tag/color. visibleDeals can contain the same deal.id more than
+  // once (once per tag), so de-dupe by id here and merge all of that
+  // post's tags into a single subcategory line for display.
+  const dedupedListDeals = useMemo(() => {
+    const byId = new Map();
+    visibleDeals.forEach((deal) => {
+      if (!byId.has(deal.id)) {
+        byId.set(deal.id, { ...deal, listSubcategoryNames: [deal.subcategory_name] });
+      } else if (deal.subcategory_name) {
+        const existing = byId.get(deal.id);
+        if (!existing.listSubcategoryNames.includes(deal.subcategory_name)) {
+          existing.listSubcategoryNames.push(deal.subcategory_name);
+        }
+      }
+    });
+    return [...byId.values()];
+  }, [visibleDeals]);
+
   const listVisibleDeals = listSearchQuery.trim()
-    ? visibleDeals.filter((d) =>
+    ? dedupedListDeals.filter((d) =>
         d.business_name?.toLowerCase().includes(listSearchQuery.trim().toLowerCase())
       )
-    : visibleDeals;
+    : dedupedListDeals;
 
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
@@ -315,6 +335,23 @@ export default function Search() {
 
       {view === 'list' && (
         <div className="p-4">
+          <div className="flex justify-center gap-1.5 mb-4">
+            {POST_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.label}
+                type="button"
+                onClick={() => setPostTypeFilter(opt.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
+                  postTypeFilter === opt.value
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-link border-slate-200'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           <div className="relative mb-4">
             <SearchIcon
               size={18}
@@ -360,7 +397,7 @@ export default function Search() {
                         {deal.post_type === 'info' ? 'Info' : 'Deal'}
                       </span>
                       <p className="text-brand-navy font-medium text-sm truncate">{deal.business_name}</p>
-                      <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                      <p className="text-brand-gray text-xs">{deal.listSubcategoryNames.join(' · ')}</p>
                       {deal.caption && (
                         <p className="text-brand-gray text-xs mt-1 line-clamp-1">{deal.caption}</p>
                       )}
