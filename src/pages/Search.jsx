@@ -15,7 +15,7 @@ import { fetchSavedDealIds, saveDeal, unsaveDeal } from '../api/savedDeals';
 import { useFilters } from '../context/FilterContext';
 import { useAuth } from '../context/AuthContext';
 import { getCategoryColor } from '../data/categoryColors';
-import { MapPin } from 'lucide-react';
+import { MapPin, Search as SearchIcon, ChevronDown, ChevronUp } from 'lucide-react';
 
 const POST_TYPE_OPTIONS = [
   { value: null, label: 'All' },
@@ -80,6 +80,8 @@ export default function Search() {
   const [savedDealIds, setSavedDealIds] = useState(new Set());
   // null = All, 'deal' = Deals only, 'info' = General Info only.
   const [postTypeFilter, setPostTypeFilter] = useState(null);
+  const [listSearchQuery, setListSearchQuery] = useState('');
+  const [expandedListId, setExpandedListId] = useState(null);
 
   useEffect(() => {
     fetchDeals()
@@ -200,6 +202,12 @@ export default function Search() {
     })
     .filter((deal) => postTypeFilter === null || deal.post_type === postTypeFilter);
 
+  const listVisibleDeals = listSearchQuery.trim()
+    ? visibleDeals.filter((d) =>
+        d.business_name?.toLowerCase().includes(listSearchQuery.trim().toLowerCase())
+      )
+    : visibleDeals;
+
   const selectedDeal = visibleDeals.find((d) => d.id === selectedDealId);
 
   // A stable string that changes only when the actual filter selection
@@ -306,28 +314,94 @@ export default function Search() {
       )}
 
       {view === 'list' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
-          {dealsError && <p className="text-red-500 text-sm col-span-full text-center">{dealsError}</p>}
+        <div className="p-4">
+          <div className="relative mb-4">
+            <SearchIcon
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray pointer-events-none"
+            />
+            <input
+              type="text"
+              value={listSearchQuery}
+              onChange={(e) => setListSearchQuery(e.target.value)}
+              placeholder="Search by business name..."
+              className="w-full rounded-xl bg-slate-100 pl-9 pr-4 py-3 text-sm text-brand-navy outline-none"
+            />
+          </div>
+
+          {dealsError && <p className="text-red-500 text-sm text-center">{dealsError}</p>}
           {deals.length === 0 && !dealsError && (
-            <p className="text-brand-gray text-sm col-span-full text-center">No deals posted yet.</p>
+            <p className="text-brand-gray text-sm text-center">No deals posted yet.</p>
           )}
-          {visibleDeals.length === 0 && deals.length > 0 && !dealsError && (
-            <p className="text-brand-gray text-sm col-span-full text-center">
-              No deals match your current filter.
+          {listVisibleDeals.length === 0 && deals.length > 0 && !dealsError && (
+            <p className="text-brand-gray text-sm text-center">
+              {listSearchQuery ? 'No businesses match your search.' : 'No deals match your current filter.'}
             </p>
           )}
-          {visibleDeals.map((deal) => (
-            <DealCard
-              key={deal.id}
-              onClick={() => setSelectedDealId(deal.id)}
-              deal={{
-                id: deal.id,
-                businessName: deal.business_name,
-                subcategoryName: deal.subcategory_name,
-                imageUrl: deal.image_url,
-              }}
-            />
-          ))}
+
+          <div className="flex flex-col gap-3">
+            {listVisibleDeals.map((deal) => {
+              const isExpanded = expandedListId === deal.id;
+              return (
+                <div key={deal.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedListId(isExpanded ? null : deal.id)}
+                    className="cursor-pointer w-full flex items-start justify-between gap-3 p-4 text-left"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className={`inline-block text-[10px] font-semibold uppercase tracking-wide rounded px-1.5 py-0.5 mb-1 ${
+                          deal.post_type === 'info'
+                            ? 'bg-slate-100 text-brand-gray'
+                            : 'bg-blue-50 text-brand-link'
+                        }`}
+                      >
+                        {deal.post_type === 'info' ? 'Info' : 'Deal'}
+                      </span>
+                      <p className="text-brand-navy font-medium text-sm truncate">{deal.business_name}</p>
+                      <p className="text-brand-gray text-xs">{deal.subcategory_name}</p>
+                      {deal.caption && (
+                        <p className="text-brand-gray text-xs mt-1 line-clamp-1">{deal.caption}</p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 pt-0.5">
+                      {isExpanded ? (
+                        <ChevronUp size={18} className="text-brand-gray" />
+                      ) : (
+                        <ChevronDown size={18} className="text-brand-gray" />
+                      )}
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="px-4 pb-4">
+                      {deal.image_url && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDealId(deal.id)}
+                          className="cursor-pointer w-full bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center"
+                        >
+                          <img
+                            src={deal.image_url}
+                            alt={deal.business_name}
+                            className="w-full max-h-80 object-contain"
+                          />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDealId(deal.id)}
+                        className="cursor-pointer w-full mt-2 rounded-lg bg-slate-100 text-brand-navy text-sm font-medium py-2 hover:bg-slate-200"
+                      >
+                        View full details
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

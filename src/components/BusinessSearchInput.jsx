@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Autocomplete, useJsApiLoader } from '@react-google-maps/api';
 import { GOOGLE_MAPS_LIBRARIES } from '../utils/googleMapsLibraries';
 
@@ -21,6 +21,36 @@ export default function BusinessSearchInput({ onSelect, selectedName }) {
   });
 
   const autocompleteRef = useRef(null);
+  const [bounds, setBounds] = useState(null);
+
+  // Biases (not restricts) search results toward the poster's current
+  // location - so typing "fuzzy" surfaces the nearby Fuzzy's Taco Shop
+  // first instead of requiring "fuzzy longmont" to narrow a nationwide
+  // chain down. Silently does nothing if location is denied/unavailable -
+  // search still works, just without the proximity boost.
+  useEffect(() => {
+    if (!isLoaded || !window.google) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const center = new window.google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+        // Roughly a 15-mile box around the user - wide enough to cover a
+        // whole town/metro area, tight enough to meaningfully prioritize
+        // local results over the same chain three states away.
+        const deltaLat = 0.22;
+        const deltaLng = 0.22;
+        setBounds(
+          new window.google.maps.LatLngBounds(
+            { lat: pos.coords.latitude - deltaLat, lng: pos.coords.longitude - deltaLng },
+            { lat: pos.coords.latitude + deltaLat, lng: pos.coords.longitude + deltaLng }
+          )
+        );
+      },
+      () => {
+        // Denied/unavailable - leave bounds null, search still works fine.
+      }
+    );
+  }, [isLoaded]);
 
   function handlePlaceChanged() {
     const place = autocompleteRef.current?.getPlace();
@@ -56,7 +86,10 @@ export default function BusinessSearchInput({ onSelect, selectedName }) {
     <Autocomplete
       onLoad={(ref) => (autocompleteRef.current = ref)}
       onPlaceChanged={handlePlaceChanged}
-      options={{ types: ['establishment'] }}
+      options={{
+        types: ['establishment'],
+        ...(bounds ? { bounds, strictBounds: false } : {}),
+      }}
     >
       <input
         type="text"
