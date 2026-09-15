@@ -124,6 +124,16 @@ export default function CreateDeal() {
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
   const allowsEventDate = selectedCategory?.name === 'Recreation';
+  const infoOnly = selectedCategory?.name === 'Jobs';
+
+  // Jobs postings are never a "Deal" - auto-switch to General Info the
+  // moment this category is selected, so the poster doesn't have to
+  // remember to change it themselves.
+  useEffect(() => {
+    if (infoOnly && postType !== 'info') {
+      setPostType('info');
+    }
+  }, [infoOnly, postType]);
 
   useEffect(() => {
     if (!usesGpsLocation) return;
@@ -344,21 +354,32 @@ export default function CreateDeal() {
         <div>
           <label className="block text-sm text-slate-600 mb-2">Post type</label>
           <div className="flex flex-wrap justify-center gap-2">
-            {POST_TYPES.map((type) => (
-              <button
-                key={type.value}
-                type="button"
-                onClick={() => setPostType(type.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  postType === type.value
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                {type.label}
-              </button>
-            ))}
+            {POST_TYPES.map((type) => {
+              const isDisabled = infoOnly && type.value === 'deal';
+              return (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => !isDisabled && setPostType(type.value)}
+                  disabled={isDisabled}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    isDisabled
+                      ? 'bg-slate-100 text-brand-gray border-slate-200 cursor-not-allowed'
+                      : postType === type.value
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  {type.label}
+                </button>
+              );
+            })}
           </div>
+          {infoOnly && (
+            <p className="text-brand-gray text-xs text-center mt-2">
+              Job postings are General Info only.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
