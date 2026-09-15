@@ -246,7 +246,7 @@ export default function Search() {
   return (
     <AppLayout>
       <TopNav
-        leftLabel="Biz Type"
+        leftLabel="Category"
         onLeft={() => navigate('/filters')}
         rightLabel={view === 'map' ? 'List' : 'Map'}
         onRight={() => setView(view === 'map' ? 'list' : 'map')}

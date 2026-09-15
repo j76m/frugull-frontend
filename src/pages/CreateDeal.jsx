@@ -123,7 +123,7 @@ export default function CreateDeal() {
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
-  const allowsEventDate = selectedCategory?.name === 'Recreation';
+  const allowsEventDate = selectedCategory?.name === 'Activities' || selectedCategory?.name === 'Entertainment';
   const infoOnly = selectedCategory?.name === 'Jobs';
 
   // Jobs postings are never a "Deal" - auto-switch to General Info the
