@@ -18,7 +18,7 @@ import { getCategoryColor } from '../data/categoryColors';
 import { MapPin, Search as SearchIcon, ChevronDown, ChevronUp } from 'lucide-react';
 
 const POST_TYPE_OPTIONS = [
-  { value: null, label: 'All' },
+  { value: null, label: 'All Posts' },
   { value: 'deal', label: 'Deals' },
   { value: 'info', label: 'Info' },
 ];
@@ -246,7 +246,7 @@ export default function Search() {
   return (
     <AppLayout>
       <TopNav
-        leftLabel="Filter"
+        leftLabel="Biz Type"
         onLeft={() => navigate('/filters')}
         rightLabel={view === 'map' ? 'List' : 'Map'}
         onRight={() => setView(view === 'map' ? 'list' : 'map')}
