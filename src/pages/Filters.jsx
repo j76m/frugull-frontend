@@ -129,48 +129,6 @@ export default function Filters() {
           </button>
         </div>
 
-        {/* Discount tags */}
-        <div className="pb-4 mb-4 border-b border-slate-200">
-          <p className="text-brand-navy font-medium text-sm mb-2">Discounts offered</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {DISCOUNT_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                type="button"
-                onClick={() => toggleDiscountTag(tag.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  selectedDiscountTags.has(tag.value)
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Valid days */}
-        <div className="pb-4 mb-4 border-b border-slate-200">
-          <p className="text-brand-navy font-medium text-sm mb-2">Valid on</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {DAYS_OF_WEEK.map((day) => (
-              <button
-                key={day.value}
-                type="button"
-                onClick={() => toggleDay(day.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  selectedDays.has(day.value)
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                {day.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <label className="flex items-center gap-2 py-3 border-b border-slate-200 cursor-pointer">
           <input
             type="checkbox"
@@ -258,6 +216,48 @@ export default function Filters() {
               </div>
             );
           })}
+        </div>
+
+        {/* Discount tags */}
+        <div className="pt-4 mt-4 pb-4 mb-4 border-t border-slate-200">
+          <p className="text-brand-navy font-medium text-sm mb-2">Discounts offered</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {DISCOUNT_TAGS.map((tag) => (
+              <button
+                key={tag.value}
+                type="button"
+                onClick={() => toggleDiscountTag(tag.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  selectedDiscountTags.has(tag.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Valid days */}
+        <div>
+          <p className="text-brand-navy font-medium text-sm mb-2">Valid on</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {DAYS_OF_WEEK.map((day) => (
+              <button
+                key={day.value}
+                type="button"
+                onClick={() => toggleDay(day.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  selectedDays.has(day.value)
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                {day.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
