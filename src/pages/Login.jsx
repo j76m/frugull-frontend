@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import * as authApi from '../api/auth';
 import Wordmark from '../components/Wordmark';
@@ -13,6 +13,7 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [username, setUsername] = useState('');
   const [isNewUser, setIsNewUser] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -118,10 +119,31 @@ export default function Login() {
                 />
               </div>
             )}
+            {isNewUser && (
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 accent-brand-link cursor-pointer flex-shrink-0"
+                />
+                <span className="text-brand-gray text-sm">
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" className="text-brand-link underline">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" target="_blank" className="text-brand-link underline">
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+            )}
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isNewUser && !agreedToTerms)}
               className="w-full rounded-xl bg-brand-link text-white font-semibold py-3 disabled:opacity-50"
             >
               {loading ? 'Verifying...' : isNewUser ? 'Create account' : 'Log in'}
