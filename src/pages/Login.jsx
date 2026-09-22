@@ -58,6 +58,7 @@ export default function Login() {
         if (cancelled || !turnstileContainerRef.current) return;
         turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
+          theme: 'light',
           callback: (token) => setTurnstileToken(token),
           'expired-callback': () => setTurnstileToken(''),
           'error-callback': () => setTurnstileToken(''),
