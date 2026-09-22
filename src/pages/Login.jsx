@@ -1,8 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import * as authApi from '../api/auth';
 import Wordmark from '../components/Wordmark';
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+
+function loadTurnstileScript() {
+  if (window.turnstile) return Promise.resolve();
+
+  const existing = document.querySelector(`script[src="${TURNSTILE_SCRIPT_SRC}"]`);
+  if (existing) {
+    return new Promise((resolve, reject) => {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Turnstile failed to load')));
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = TURNSTILE_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Turnstile failed to load'));
+    document.head.appendChild(script);
+  });
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,16 +41,67 @@ export default function Login() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const turnstileContainerRef = useRef(null);
+  const turnstileWidgetIdRef = useRef(null);
+
+  // Render the Turnstile widget whenever the email step is showing
+  useEffect(() => {
+    if (step !== 'email') return;
+
+    let cancelled = false;
+    setTurnstileToken('');
+
+    loadTurnstileScript()
+      .then(() => {
+        if (cancelled || !turnstileContainerRef.current) return;
+        turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token) => setTurnstileToken(token),
+          'expired-callback': () => setTurnstileToken(''),
+          'error-callback': () => setTurnstileToken(''),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Security check failed to load. Refresh the page and try again.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (turnstileWidgetIdRef.current !== null && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+      }
+      turnstileWidgetIdRef.current = null;
+    };
+  }, [step]);
+
+  function resetTurnstile() {
+    setTurnstileToken('');
+    if (turnstileWidgetIdRef.current !== null && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetIdRef.current);
+    }
+  }
 
   async function handleSendCode(e) {
     e.preventDefault();
     setError('');
+
+    if (!turnstileToken) {
+      setError('Please wait for the security check to finish.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await authApi.sendCode(email);
+      await authApi.sendCode(email, turnstileToken);
       setStep('code');
     } catch (err) {
       setError(err.response?.data?.error || 'Could not send code. Try again.');
+      // Tokens are single-use, so get a fresh one for the next attempt
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -77,10 +153,11 @@ export default function Login() {
                 className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
               />
             </div>
+            <div ref={turnstileContainerRef} className="flex justify-center" />
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !turnstileToken}
               className="w-full rounded-xl bg-brand-link text-white font-semibold py-3 disabled:opacity-50"
             >
               {loading ? 'Sending code...' : 'Continue'}
@@ -150,7 +227,10 @@ export default function Login() {
             </button>
             <button
               type="button"
-              onClick={() => setStep('email')}
+              onClick={() => {
+                setError('');
+                setStep('email');
+              }}
               className="w-full text-brand-gray text-sm py-2"
             >
               Use a different email

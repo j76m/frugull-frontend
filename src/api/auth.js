@@ -2,7 +2,7 @@ import client from './client';
 
 // Confirmed against the real frugull-backend repo (authController.js):
 //
-//   POST /auth/send-code    { email }                  -> { message }
+//   POST /auth/send-code    { email, turnstileToken }  -> { message }
 //   POST /auth/signup       { email, code, username }  -> 201 { user, token }
 //   POST /auth/verify-code  { email, code }             -> { user, token }
 //                                                           404 { error } if no account yet
@@ -16,8 +16,8 @@ import client from './client';
 //     wants_email_updates, created_at, updated_at }
 //   rank_tier is one of: egg | baby_gull | gull | frugull | gullfather
 
-export async function sendCode(email) {
-  const { data } = await client.post('/auth/send-code', { email });
+export async function sendCode(email, turnstileToken) {
+  const { data } = await client.post('/auth/send-code', { email, turnstileToken });
   return data;
 }
 
