@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Search, Plus, User } from 'lucide-react';
 
@@ -7,7 +8,54 @@ const tabs = [
   { to: '/me', label: 'Profile', Icon: User, end: false },
 ];
 
+// Input types that don't open the keyboard or a picker.
+const NON_TYPING_INPUT_TYPES = ['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'range', 'color'];
+
+// True for fields that open the iPhone keyboard or date picker.
+function isTypingField(el) {
+  if (!el || !el.tagName) return false;
+  const tag = el.tagName.toLowerCase();
+  if (tag === 'textarea' || tag === 'select') return true;
+  if (el.isContentEditable) return true;
+  if (tag === 'input') {
+    const type = (el.getAttribute('type') || 'text').toLowerCase();
+    return !NON_TYPING_INPUT_TYPES.includes(type);
+  }
+  return false;
+}
+
 export default function BottomTabs() {
+  // iPhone Safari knocks position:fixed bars out of place when the
+  // keyboard or date picker opens, leaving the bar stuck mid-page.
+  // Hiding the bar while a field is active avoids it entirely.
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    const onFocusIn = (e) => {
+      if (isTypingField(e.target)) setTyping(true);
+    };
+
+    // Moving between fields fires focusout then focusin - the short delay
+    // keeps the bar from flashing back in between.
+    let timer;
+    const onFocusOut = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        setTyping(isTypingField(document.activeElement));
+      }, 100);
+    };
+
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+    };
+  }, []);
+
+  if (typing) return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-around py-1.5">
