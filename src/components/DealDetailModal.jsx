@@ -13,6 +13,30 @@ const REPORT_REASONS = [
   { value: 'other', label: 'Other' },
 ];
 
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_VALUES = [1, 2, 3, 4, 5];
+const WEEKEND_VALUES = [0, 6];
+
+// Turns a deal's valid_days_of_week array into a short, human-readable
+// summary - e.g. [1,2,3,4,5] becomes "Weekdays Only". Returns null when
+// there's nothing specific to say (untagged, or literally every day).
+function formatValidDays(validDays) {
+  if (!validDays || validDays.length === 0) return null;
+  const sorted = [...validDays].sort();
+
+  if (sorted.length === 7) return 'Valid Every Day';
+
+  const isExactly = (set) =>
+    sorted.length === set.length && set.every((d) => sorted.includes(d));
+
+  if (isExactly(WEEKDAY_VALUES)) return 'Weekdays Only';
+  if (isExactly(WEEKEND_VALUES)) return 'Weekends Only';
+
+  const names = sorted.map((d) => `${DAY_NAMES[d]}s`);
+  if (names.length === 1) return `${names[0]} Only`;
+  return `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]} Only`;
+}
+
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -335,7 +359,11 @@ export default function DealDetailModal({
                   })}`}
             </p>
           )}
-          <p className="text-brand-gray text-xs mt-2">Posted by {deal.posted_by}</p>
+          {formatValidDays(deal.valid_days_of_week) && (
+            <p className="text-brand-navy text-xs font-medium mt-1">
+              {formatValidDays(deal.valid_days_of_week)}
+            </p>
+          )}
 
           <div className="flex items-center gap-3 mt-3">
             <button
