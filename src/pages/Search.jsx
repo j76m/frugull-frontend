@@ -276,26 +276,11 @@ export default function Search() {
               </select>
             </div>
 
-            <div className="flex-1 flex justify-center gap-1.5">
-              {POST_TYPE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.label}
-                  type="button"
-                  onClick={() => setPostTypeFilter(opt.value)}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
-                    postTypeFilter === opt.value
-                      ? 'bg-brand-navy text-white border-brand-navy'
-                      : 'bg-white text-brand-link border-slate-200'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <div className="flex-1" aria-hidden="true" />
 
-            {/* Invisible spacer matching the dropdown's width, so the pills
-                land dead-center on the full row instead of just the space
-                remaining after the dropdown. */}
+            {/* Invisible spacer matching the dropdown's width, so the
+                dropdown stays left-aligned without the row looking lopsided
+                now that the post-type toggle has been removed. */}
             <div className="w-[150px] flex-shrink-0" aria-hidden="true" />
           </div>
 
@@ -335,23 +320,6 @@ export default function Search() {
 
       {view === 'list' && (
         <div className="p-4">
-          <div className="flex justify-center gap-1.5 mb-4">
-            {POST_TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.label}
-                type="button"
-                onClick={() => setPostTypeFilter(opt.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border ${
-                  postTypeFilter === opt.value
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-link border-slate-200'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
           <div className="relative mb-4">
             <SearchIcon
               size={18}
