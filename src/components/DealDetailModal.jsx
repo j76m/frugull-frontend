@@ -338,7 +338,14 @@ export default function DealDetailModal({
             </div>
           )}
 
-          <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>
+            {deal.posted_via === 'free' && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-gray bg-slate-100 rounded-full px-2 py-0.5">
+                Community Post
+              </span>
+            )}
+          </div>
           <p className="text-brand-link font-medium text-sm mt-0.5">
             {deal.all_subcategory_names?.length > 1
               ? deal.all_subcategory_names.join(' · ')

@@ -556,14 +556,14 @@ export default function CreateDeal() {
           </div>
         </div>
 
-        {/* 6. Valid Days */}
+        {/* 6. Valid Days - available to every tier */}
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Valid days <span className="text-brand-gray">(optional)</span>
           </label>
           <div
             className={`flex flex-wrap justify-center gap-2 ${
-              !allowance || allowance.method === 'free' ? 'opacity-40 pointer-events-none' : ''
+              !allowance ? 'opacity-40 pointer-events-none' : ''
             }`}
           >
             <button
@@ -592,11 +592,9 @@ export default function CreateDeal() {
               </button>
             ))}
           </div>
-          {(!allowance || allowance.method === 'free') && (
+          {!allowance && (
             <p className="text-brand-gray text-xs text-center mt-2">
-              {businessRecord && subcategoryId
-                ? "Free posts run for a fixed window and can't be limited to specific days. Upgrade to Frugull Unlimited or use a credit for this."
-                : 'Select a location and subcategory to see day options.'}
+              Select a location and subcategory to see day options.
             </p>
           )}
         </div>
