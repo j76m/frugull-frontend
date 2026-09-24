@@ -25,6 +25,21 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Sat' },
 ];
 
+// Categories grouped under a "Deals" section header on this page. Everything
+// else (Community Happenings, Farm Stands, Food Trucks, and any future
+// category not in this set) renders standalone, ungrouped - this is purely
+// a display grouping for the Filters page; it has no effect on the
+// underlying category/subcategory data or how deals are actually tagged.
+const DEAL_CATEGORY_NAMES = new Set([
+  'Restaurants',
+  'Beverages',
+  'Personal Care',
+  'Auto Care',
+  'Retail',
+  'Dispensary',
+  'Activities',
+]);
+
 export default function Filters() {
   const navigate = useNavigate();
   const {
@@ -114,6 +129,86 @@ export default function Filters() {
     });
   }
 
+  const dealCategories = ACTIVE_CATEGORIES.filter((cat) => DEAL_CATEGORY_NAMES.has(cat.name));
+  const otherCategories = ACTIVE_CATEGORIES.filter((cat) => !DEAL_CATEGORY_NAMES.has(cat.name));
+
+  function renderCategoryGroup(cats, groupLabel) {
+    if (cats.length === 0) return null;
+    return (
+      <div className="space-y-1">
+        {groupLabel && (
+          <p className="text-brand-gray text-xs font-semibold uppercase tracking-wide pt-3 pb-1">
+            {groupLabel}
+          </p>
+        )}
+        {cats.map((cat) => {
+          const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s.id));
+          const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s.id)).length;
+          const hasSelections = selectedCount > 0;
+          const isExpanded = expanded.has(cat.name);
+
+          return (
+            <div key={cat.id} className="border-b border-slate-100">
+              <button
+                type="button"
+                onClick={() => toggleExpanded(cat.name)}
+                className="w-full flex items-center justify-between py-3 cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`font-medium ${
+                      hasSelections ? 'text-brand-link' : 'text-brand-navy'
+                    }`}
+                  >
+                    {cat.name}
+                  </span>
+                  {hasSelections && (
+                    <span className="text-[11px] font-semibold text-brand-link bg-blue-50 rounded-full px-2 py-0.5">
+                      {selectedCount}
+                    </span>
+                  )}
+                </span>
+                {isExpanded ? (
+                  <ChevronUp size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
+                ) : (
+                  <ChevronDown size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
+                )}
+              </button>
+
+              {isExpanded && (
+                <div className="pb-3 pl-2 space-y-2">
+                  <label className="flex items-center gap-2 py-1 cursor-pointer border-b border-slate-100 pb-2 mb-1">
+                    <input
+                      type="checkbox"
+                      checked={allInCategorySelected}
+                      onChange={() => toggleCategoryAll(cat.subcategories)}
+                      className="w-4 h-4 accent-brand-link cursor-pointer"
+                    />
+                    <span className="text-brand-navy text-sm font-medium">
+                      All {cat.name}
+                    </span>
+                  </label>
+
+                  {cat.subcategories.map((sub) => (
+                    <label key={sub.id} className="flex items-center gap-2 py-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedSubs.has(sub.id)}
+                        onChange={() => toggleSub(sub.id)}
+                        className="w-4 h-4 accent-brand-link cursor-pointer"
+                      />
+                      <span className="text-brand-navy text-sm">{sub.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <TopNav leftLabel="Back" onLeft={() => navigate(-1)} rightLabel="Apply" onRight={() => navigate(-1)} />
@@ -151,72 +246,8 @@ export default function Filters() {
           </p>
         )}
 
-        <div className="space-y-1">
-          {ACTIVE_CATEGORIES.map((cat) => {
-            const allInCategorySelected = cat.subcategories.every((s) => selectedSubs.has(s.id));
-            const selectedCount = cat.subcategories.filter((s) => selectedSubs.has(s.id)).length;
-            const hasSelections = selectedCount > 0;
-            const isExpanded = expanded.has(cat.name);
-
-            return (
-              <div key={cat.id} className="border-b border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => toggleExpanded(cat.name)}
-                  className="w-full flex items-center justify-between py-3 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className={`font-medium ${
-                        hasSelections ? 'text-brand-link' : 'text-brand-navy'
-                      }`}
-                    >
-                      {cat.name}
-                    </span>
-                    {hasSelections && (
-                      <span className="text-[11px] font-semibold text-brand-link bg-blue-50 rounded-full px-2 py-0.5">
-                        {selectedCount}
-                      </span>
-                    )}
-                  </span>
-                  {isExpanded ? (
-                    <ChevronUp size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
-                  ) : (
-                    <ChevronDown size={18} className={hasSelections ? 'text-brand-link' : 'text-brand-gray'} />
-                  )}
-                </button>
-
-                {isExpanded && (
-                  <div className="pb-3 pl-2 space-y-2">
-                    <label className="flex items-center gap-2 py-1 cursor-pointer border-b border-slate-100 pb-2 mb-1">
-                      <input
-                        type="checkbox"
-                        checked={allInCategorySelected}
-                        onChange={() => toggleCategoryAll(cat.subcategories)}
-                        className="w-4 h-4 accent-brand-link cursor-pointer"
-                      />
-                      <span className="text-brand-navy text-sm font-medium">
-                        All {cat.name}
-                      </span>
-                    </label>
-
-                    {cat.subcategories.map((sub) => (
-                      <label key={sub.id} className="flex items-center gap-2 py-1 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedSubs.has(sub.id)}
-                          onChange={() => toggleSub(sub.id)}
-                          className="w-4 h-4 accent-brand-link cursor-pointer"
-                        />
-                        <span className="text-brand-navy text-sm">{sub.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {renderCategoryGroup(dealCategories, 'Deals')}
+        {renderCategoryGroup(otherCategories, null)}
 
         {/* Discount tags */}
         <div className="pt-4 mt-4 pb-4 mb-4 border-t border-slate-200">
