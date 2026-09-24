@@ -31,11 +31,6 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Sat' },
 ];
 
-const POST_TYPES = [
-  { value: 'deal', label: 'Deal / Special' },
-  { value: 'info', label: 'General Info' },
-];
-
 async function compressImage(file, maxDimension = 1600, quality = 0.8) {
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
@@ -72,7 +67,6 @@ export default function CreateDeal() {
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
-  const [postType, setPostType] = useState('deal');
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
 
@@ -93,9 +87,10 @@ export default function CreateDeal() {
   const [allowanceLoading, setAllowanceLoading] = useState(false);
   const [durationDays, setDurationDays] = useState(null);
 
-  // "Date of" mode - currently Recreation-only. When active, the poster
-  // picks the event's actual date instead of a "runs until" date, and the
-  // backend automatically expires the post at midnight the following day.
+  // "Date of" mode - currently Activities/Community Happenings. When
+  // active, the poster picks the event's actual date instead of a "runs
+  // until" date, and the backend automatically expires the post at
+  // midnight the following day.
   const [isEventDate, setIsEventDate] = useState(false);
   const [eventDate, setEventDate] = useState('');
 
@@ -126,14 +121,10 @@ export default function CreateDeal() {
   const allowsEventDate = selectedCategory?.name === 'Activities' || selectedCategory?.name === 'Community Happenings';
   const infoOnly = selectedCategory?.name === 'Help Wanted' || selectedCategory?.name === 'Community Happenings';
 
-  // Jobs postings are never a "Deal" - auto-switch to General Info the
-  // moment this category is selected, so the poster doesn't have to
-  // remember to change it themselves.
-  useEffect(() => {
-    if (infoOnly && postType !== 'info') {
-      setPostType('info');
-    }
-  }, [infoOnly, postType]);
+  // Post type is fully derived from category, never user-chosen - info-
+  // only categories (Help Wanted, Community Happenings) always post as
+  // General Info, everything else always posts as a Deal.
+  const postType = infoOnly ? 'info' : 'deal';
 
   useEffect(() => {
     if (!usesGpsLocation) return;
@@ -322,66 +313,9 @@ export default function CreateDeal() {
     <AppLayout>
       <TopNav leftLabel="Cancel" onLeft={() => navigate(-1)} />
       <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-5">
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-slate-100 rounded-xl border-2 border-slate-200 overflow-hidden cursor-pointer"
-          >
-            {photoPreviewUrl ? (
-              <img
-                src={photoPreviewUrl}
-                alt="Deal preview"
-                className="w-full h-auto max-h-[60vh] object-contain block"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-2 py-16">
-                <Camera size={32} className="text-brand-gray" />
-                <span className="text-brand-gray text-sm">Take or choose a photo</span>
-              </div>
-            )}
-          </button>
-        </div>
-
-        <div>
-          <label className="block text-sm text-slate-600 mb-2">Post type</label>
-          <div className="flex flex-wrap justify-center gap-2">
-            {POST_TYPES.map((type) => {
-              const isDisabled = infoOnly && type.value === 'deal';
-              return (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => !isDisabled && setPostType(type.value)}
-                  disabled={isDisabled}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                    isDisabled
-                      ? 'bg-slate-100 text-brand-gray border-slate-200 cursor-not-allowed'
-                      : postType === type.value
-                      ? 'bg-brand-navy text-white border-brand-navy'
-                      : 'bg-white text-brand-navy border-brand-link'
-                  }`}
-                >
-                  {type.label}
-                </button>
-              );
-            })}
-          </div>
-          {infoOnly && (
-            <p className="text-brand-gray text-xs text-center mt-2">
-              Job postings are General Info only.
-            </p>
-          )}
-        </div>
-
+        {/* 1. Category / Subcategory - drives everything else: whether
+            this is a Deal or Info post, whether location uses business
+            search or GPS, and whether an event date is offered. */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm text-slate-600 mb-1">Category</label>
@@ -416,6 +350,13 @@ export default function CreateDeal() {
           </div>
         </div>
         {categoriesError && <p className="text-red-500 text-sm">{categoriesError}</p>}
+        {selectedCategory && (
+          <p className="text-brand-gray text-xs -mt-3">
+            {infoOnly
+              ? 'This category posts as General Info.'
+              : 'This category posts as a Deal.'}
+          </p>
+        )}
 
         {/* Multi-tagging (Unlimited only): one photo/post can advertise
             multiple, unrelated offerings (e.g. a sign showing both a food
@@ -478,6 +419,7 @@ export default function CreateDeal() {
           </div>
         )}
 
+        {/* 2. Business / Location */}
         {selectedCategory && (
           <div>
             {usesGpsLocation ? (
@@ -534,9 +476,42 @@ export default function CreateDeal() {
           </div>
         )}
 
+        {/* 3. Photo */}
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-slate-100 rounded-xl border-2 border-slate-200 overflow-hidden cursor-pointer"
+          >
+            {photoPreviewUrl ? (
+              <img
+                src={photoPreviewUrl}
+                alt="Deal preview"
+                className="w-full h-auto max-h-[60vh] object-contain block"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 py-16">
+                <Camera size={32} className="text-brand-gray" />
+                <span className="text-brand-gray text-sm">
+                  {infoOnly ? 'Take a photo of the flyer' : 'Take a photo of the deal'}
+                </span>
+              </div>
+            )}
+          </button>
+        </div>
+
+        {/* 4. Description */}
         <div>
           <label className="block text-sm text-slate-600 mb-1">
-            Description <span className="text-red-500">*</span>
+            {infoOnly ? 'Describe the Details' : 'Describe the Deal'} <span className="text-red-500">*</span>
           </label>
           <label className="flex items-center gap-2 mb-2 cursor-pointer">
             <input
@@ -558,6 +533,7 @@ export default function CreateDeal() {
           />
         </div>
 
+        {/* 5. Discounts Offered */}
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Discounts offered <span className="text-brand-gray">(optional)</span>
@@ -580,6 +556,7 @@ export default function CreateDeal() {
           </div>
         </div>
 
+        {/* 6. Valid Days */}
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Valid days <span className="text-brand-gray">(optional)</span>
@@ -624,6 +601,7 @@ export default function CreateDeal() {
           )}
         </div>
 
+        {/* 7. Expiration / Duration - the final cap on the post */}
         <div>
           {allowsEventDate && (
             <div className="flex justify-center gap-2 mb-3">
