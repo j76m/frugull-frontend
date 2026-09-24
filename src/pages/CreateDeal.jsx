@@ -123,8 +123,8 @@ export default function CreateDeal() {
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
-  const allowsEventDate = selectedCategory?.name === 'Activities' || selectedCategory?.name === 'Entertainment';
-  const infoOnly = selectedCategory?.name === 'Jobs';
+  const allowsEventDate = selectedCategory?.name === 'Activities' || selectedCategory?.name === 'Community Happenings';
+  const infoOnly = selectedCategory?.name === 'Help Wanted' || selectedCategory?.name === 'Community Happenings';
 
   // Jobs postings are never a "Deal" - auto-switch to General Info the
   // moment this category is selected, so the poster doesn't have to
