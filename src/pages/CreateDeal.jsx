@@ -93,6 +93,11 @@ export default function CreateDeal() {
   // midnight the following day.
   const [isEventDate, setIsEventDate] = useState(false);
   const [eventDate, setEventDate] = useState('');
+  const [eventEndDate, setEventEndDate] = useState('');
+  // Community Happenings-only: 'date' | 'range' | 'recurring'. Defaults to
+  // 'date' since a single specific date is the most common case (Grand
+  // Opening, a comedy show), with Range and Recurring as opt-ins.
+  const [happeningsMode, setHappeningsMode] = useState('date');
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -118,7 +123,9 @@ export default function CreateDeal() {
 
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
-  const allowsEventDate = selectedCategory?.name === 'Activities' || selectedCategory?.name === 'Community Happenings';
+  const isActivities = selectedCategory?.name === 'Activities';
+  const isCommunityHappenings = selectedCategory?.name === 'Community Happenings';
+  const allowsEventDate = isActivities || isCommunityHappenings;
   const infoOnly = selectedCategory?.name === 'Help Wanted' || selectedCategory?.name === 'Community Happenings';
 
   // Post type is fully derived from category, never user-chosen - info-
@@ -215,6 +222,8 @@ export default function CreateDeal() {
     setGpsBusinessError('');
     setIsEventDate(false);
     setEventDate('');
+    setEventEndDate('');
+    setHappeningsMode('date');
     setAdditionalTags([]);
   }
 
@@ -273,8 +282,15 @@ export default function CreateDeal() {
         validDaysOfWeek: validDays.length > 0 ? validDays : undefined,
         requestedDurationDays: durationDays || undefined,
         postType,
-        isEventDate: allowsEventDate && isEventDate,
-        eventDate: allowsEventDate && isEventDate ? eventDate : undefined,
+        isEventDate: isActivities ? isEventDate : isCommunityHappenings && happeningsMode !== 'recurring',
+        eventDate:
+          isActivities && isEventDate
+            ? eventDate
+            : isCommunityHappenings && happeningsMode !== 'recurring'
+            ? eventDate
+            : undefined,
+        eventEndDate: isCommunityHappenings && happeningsMode === 'range' ? eventEndDate : undefined,
+        isCommunityHappenings,
         additionalTags: plan === 'unlimited' && validAdditionalTags.length > 0 ? validAdditionalTags : undefined,
       });
 
@@ -601,46 +617,169 @@ export default function CreateDeal() {
 
         {/* 7. Expiration / Duration - the final cap on the post */}
         <div>
-          {allowsEventDate && (
-            <div className="flex justify-center gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => setIsEventDate(false)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  !isEventDate
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                Runs until
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEventDate(true)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  isEventDate
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                Date of
-              </button>
-            </div>
-          )}
-
-          {allowsEventDate && isEventDate ? (
+          {isCommunityHappenings ? (
             <>
-              <label className="block text-sm text-slate-600 mb-2">Date of event</label>
-              <input
-                type="date"
-                value={eventDate}
-                min={toDateInputValue(today)}
-                onChange={(e) => setEventDate(e.target.value)}
-                className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
-              />
-              <p className="text-brand-gray text-xs mt-1">
-                This post will automatically expire at midnight the day after the event.
-              </p>
+              <div className="flex flex-wrap justify-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setHappeningsMode('date')}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    happeningsMode === 'date'
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Specific Date
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHappeningsMode('range')}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    happeningsMode === 'range'
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Date Range
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHappeningsMode('recurring')}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    happeningsMode === 'recurring'
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Recurring
+                </button>
+              </div>
+
+              {happeningsMode === 'date' && (
+                <>
+                  <label className="block text-sm text-slate-600 mb-2">Date of event</label>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    min={toDateInputValue(today)}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                  />
+                  <p className="text-brand-gray text-xs mt-1">
+                    This post will automatically expire at midnight the day after the event.
+                  </p>
+                </>
+              )}
+
+              {happeningsMode === 'range' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2">Starts</label>
+                    <input
+                      type="date"
+                      value={eventDate}
+                      min={toDateInputValue(today)}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-2">Ends</label>
+                    <input
+                      type="date"
+                      value={eventEndDate}
+                      min={eventDate || toDateInputValue(today)}
+                      onChange={(e) => setEventEndDate(e.target.value)}
+                      className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                    />
+                  </div>
+                  <p className="text-brand-gray text-xs col-span-2 mt-1">
+                    This post will automatically expire at midnight the day after it ends.
+                  </p>
+                </div>
+              )}
+
+              {happeningsMode === 'recurring' && (
+                <p className="text-brand-gray text-sm">
+                  Set which day(s) this happens using Valid Days above. This post stays live
+                  for up to 180 days.
+                </p>
+              )}
+            </>
+          ) : isActivities ? (
+            <>
+              <div className="flex justify-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEventDate(false)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    !isEventDate
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Runs until
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEventDate(true)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    isEventDate
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Date of
+                </button>
+              </div>
+
+              {isEventDate ? (
+                <>
+                  <label className="block text-sm text-slate-600 mb-2">Date of event</label>
+                  <input
+                    type="date"
+                    value={eventDate}
+                    min={toDateInputValue(today)}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                  />
+                  <p className="text-brand-gray text-xs mt-1">
+                    This post will automatically expire at midnight the day after the event.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+                  {!businessRecord || !subcategoryId ? (
+                    <p className="text-brand-gray text-sm">
+                      Select a location and subcategory to see how long this post can run.
+                    </p>
+                  ) : allowanceLoading ? (
+                    <p className="text-brand-gray text-sm">Checking...</p>
+                  ) : allowance?.method === 'free' ? (
+                    <p className="text-brand-navy text-sm">
+                      {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
+                    </p>
+                  ) : allowance ? (
+                    <>
+                      <input
+                        type="date"
+                        value={selectedDate ? toDateInputValue(selectedDate) : ''}
+                        min={toDateInputValue(tomorrow)}
+                        max={maxDate ? toDateInputValue(maxDate) : undefined}
+                        onChange={handleDurationDateChange}
+                        className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+                      />
+                      <p className="text-brand-gray text-xs mt-1">
+                        Up to {allowance.maxDurationDays} days from today
+                        {allowance.method === 'credit' ? ' (using 1 credit)' : ' (Frugull Unlimited)'}.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-red-500 text-sm">Could not check posting options. Try again.</p>
+                  )}
+                </>
+              )}
             </>
           ) : (
             <>
