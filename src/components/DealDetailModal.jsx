@@ -342,7 +342,12 @@ export default function DealDetailModal({
             <p className="text-brand-navy font-bold text-xl">{deal.business_name}</p>
             {deal.posted_via === 'free' && (
               <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-gray bg-slate-100 rounded-full px-2 py-0.5">
-                Community Post
+                Public Post
+              </span>
+            )}
+            {(deal.posted_via === 'credit' || deal.posted_via === 'unlimited') && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white bg-brand-navy rounded-full px-2 py-0.5">
+                Paid Post
               </span>
             )}
           </div>
