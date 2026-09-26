@@ -53,7 +53,7 @@ export default function HowItWorks() {
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5 mb-4">
             <li>Open frugull.com in Safari</li>
             <li>
-              Tap the Share button (the square with an arrow pointing up). On newer iOS
+              Tap the Share button. On newer iOS
               versions, tap ••• first, then Share
             </li>
             <li>Scroll down and tap Add to Home Screen; tap Add</li>
