@@ -65,8 +65,8 @@ export default function HowItWorks() {
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>Open frugull.com in Chrome</li>
             <li>Tap the ⋮ menu in the top-right corner</li>
-            <li>Tap Add to Home screen (or Install app)</li>
-            <li>Tap Add or Install</li>
+            <li>Tap Add to Home screen</li>
+            <li>Tap Add</li>
           </ul>
         </section>
 
