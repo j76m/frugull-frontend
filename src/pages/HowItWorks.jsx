@@ -66,6 +66,8 @@ export default function HowItWorks() {
             Frugull Unlimited — $30/month or $150/6 months
           </h2>
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
+            <li>Covers one business location</li>
+            <li>Additional locations: $15/month or $75/6 months each</li>
             <li>Post as many deals as you want, all live at the same time</li>
             <li>Up to 90 days per post</li>
             <li>
