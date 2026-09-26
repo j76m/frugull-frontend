@@ -123,6 +123,14 @@ export default function MembershipSection() {
   const used = slotBusinesses.length;
   const showLocations = isUnlimited && !subscription?.isComped && subscription?.currentPeriodEnd;
 
+  function formatDate(value) {
+    return new Date(value).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
   function handleAddLocation() {
     const ok = window.confirm(
       `Add a location for ${addPrice}? You'll be charged a prorated amount today for the rest of your current billing period, then ${addPrice} with each renewal.`
@@ -157,7 +165,14 @@ export default function MembershipSection() {
               <p className="text-brand-navy font-semibold">Frugull Unlimited</p>
 
               {subscription.isComped ? (
-                <p className="text-brand-gray text-sm mt-1">Comped account · unlimited locations</p>
+                subscription.currentPeriodEnd ? (
+                  <p className="text-brand-gray text-sm mt-1">
+                    Complimentary Unlimited through {formatDate(subscription.currentPeriodEnd)}.
+                    Your account returns to Free after that. Upgrade anytime from this page.
+                  </p>
+                ) : (
+                  <p className="text-brand-gray text-sm mt-1">Comped account · unlimited locations</p>
+                )
               ) : (
                 <p className="text-brand-gray text-sm mt-1">
                   {isSixMonth ? '6-month plan' : 'Monthly plan'}
