@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { fetchSubscriptionStatus, cancelUnlimited, resumeUnlimited } from '../api/subscriptions';
+import {
+  fetchSubscriptionStatus,
+  cancelUnlimited,
+  resumeUnlimited,
+  addLocationSlot,
+  removeLocationSlot,
+} from '../api/subscriptions';
 import { fetchCreditBalance } from '../api/credits';
 import { startCheckout } from '../api/billing';
 
@@ -83,27 +89,59 @@ export default function MembershipSection() {
     handleCheckout('credits_five', true);
   }
 
-  async function handleToggleAutoRenew(turnOn) {
+  async function runAction(action, successMessage, fallbackMessage) {
     setBusy(true);
     setError('');
+    setNotice('');
     try {
-      if (turnOn) {
-        await resumeUnlimited();
-      } else {
-        await cancelUnlimited();
-      }
+      await action();
       await loadStatus();
+      if (successMessage) {
+        setNotice(successMessage);
+        setTimeout(() => setNotice(''), 6000);
+      }
     } catch (err) {
-      setError(
-        err?.response?.data?.error ||
-          `Could not turn ${turnOn ? 'on' : 'off'} auto-renew. Please try again.`
-      );
+      setError(err?.response?.data?.error || fallbackMessage);
     } finally {
       setBusy(false);
     }
   }
 
+  function handleToggleAutoRenew(turnOn) {
+    runAction(
+      turnOn ? resumeUnlimited : cancelUnlimited,
+      null,
+      `Could not turn ${turnOn ? 'on' : 'off'} auto-renew. Please try again.`
+    );
+  }
+
   const isUnlimited = subscription?.plan === 'unlimited';
+  const isSixMonth = subscription?.billingInterval === 'six_month';
+  const addPrice = isSixMonth ? '$75/6mo' : '$15/mo';
+  const slots = subscription?.locationSlots ?? 1;
+  const slotBusinesses = subscription?.slotBusinesses ?? [];
+  const used = slotBusinesses.length;
+  const showLocations = isUnlimited && !subscription?.isComped && subscription?.currentPeriodEnd;
+
+  function handleAddLocation() {
+    const ok = window.confirm(
+      `Add a location for ${addPrice}? You'll be charged a prorated amount today for the rest of your current billing period, then ${addPrice} with each renewal.`
+    );
+    if (!ok) return;
+    runAction(addLocationSlot, 'Location added.', 'Could not add a location. Please try again.');
+  }
+
+  function handleRemoveLocation() {
+    const ok = window.confirm(
+      'Remove one unused location slot? Unused time is credited toward your next bill.'
+    );
+    if (!ok) return;
+    runAction(
+      removeLocationSlot,
+      'Location slot removed.',
+      'Could not remove the location slot. Please try again.'
+    );
+  }
 
   return (
     <div className="mt-6 pt-4 border-t border-slate-200">
@@ -117,17 +155,23 @@ export default function MembershipSection() {
           {isUnlimited ? (
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <p className="text-brand-navy font-semibold">Frugull Unlimited</p>
-              <p className="text-brand-gray text-sm mt-1">
-                {subscription.billingInterval === 'six_month' ? '6-month plan' : 'Monthly plan'}
-                {subscription.currentPeriodEnd && (
-                  <>
-                    {' · '}
-                    {subscription.autoRenew ? 'Auto-renews' : 'Ends'} on{' '}
-                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                  </>
-                )}
-              </p>
-              {subscription.currentPeriodEnd && (
+
+              {subscription.isComped ? (
+                <p className="text-brand-gray text-sm mt-1">Comped account · unlimited locations</p>
+              ) : (
+                <p className="text-brand-gray text-sm mt-1">
+                  {isSixMonth ? '6-month plan' : 'Monthly plan'}
+                  {subscription.currentPeriodEnd && (
+                    <>
+                      {' · '}
+                      {subscription.autoRenew ? 'Auto-renews' : 'Ends'} on{' '}
+                      {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                    </>
+                  )}
+                </p>
+              )}
+
+              {!subscription.isComped && subscription.currentPeriodEnd && (
                 <button
                   onClick={() => handleToggleAutoRenew(!subscription.autoRenew)}
                   disabled={busy}
@@ -135,6 +179,44 @@ export default function MembershipSection() {
                 >
                   {subscription.autoRenew ? 'Turn off auto-renew' : 'Turn on auto-renew'}
                 </button>
+              )}
+
+              {showLocations && (
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <p className="text-brand-navy font-medium text-sm">
+                    Locations: {used} of {slots} used
+                  </p>
+
+                  {used > 0 ? (
+                    <ul className="mt-1 text-sm text-brand-gray">
+                      {slotBusinesses.map((b) => (
+                        <li key={b.id}>{b.name}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-brand-gray text-sm mt-1">
+                      Your first post for a business claims a location slot.
+                    </p>
+                  )}
+
+                  <button
+                    onClick={handleAddLocation}
+                    disabled={busy}
+                    className="mt-3 w-full rounded-lg border-2 border-brand-navy text-brand-navy font-medium py-2 text-sm hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    Add a location — {addPrice}
+                  </button>
+
+                  {slots > 1 && slots > used && (
+                    <button
+                      onClick={handleRemoveLocation}
+                      disabled={busy}
+                      className="mt-2 w-full text-sm text-brand-link underline disabled:opacity-50"
+                    >
+                      Remove an unused slot
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ) : (
@@ -184,6 +266,9 @@ export default function MembershipSection() {
               >
                 Upgrade to Frugull Unlimited
               </button>
+              <p className="text-brand-gray text-xs mt-2 text-center">
+                Covers one business location. Add more for $15/mo each.
+              </p>
             </div>
           )}
 
