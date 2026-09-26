@@ -43,6 +43,34 @@ export default function HowItWorks() {
         </section>
 
         <section>
+          <h2 className="text-lg font-semibold text-brand-navy mb-2">
+            Add Frugull to Your Home Screen
+          </h2>
+          <p className="text-brand-gray text-sm leading-relaxed mb-3">
+            Get one-tap access, just like an app.
+          </p>
+
+          <h3 className="text-sm font-semibold text-brand-navy mb-1.5">iPhone</h3>
+          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5 mb-4">
+            <li>Open frugull.com in Safari</li>
+            <li>
+              Tap the Share button (the square with an arrow pointing up). On newer iOS
+              versions, tap ••• first, then Share
+            </li>
+            <li>Scroll down and tap Add to Home Screen</li>
+            <li>Tap Add</li>
+          </ul>
+
+          <h3 className="text-sm font-semibold text-brand-navy mb-1.5">Android</h3>
+          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
+            <li>Open frugull.com in Chrome</li>
+            <li>Tap the ⋮ menu in the top-right corner</li>
+            <li>Tap Add to Home screen (or Install app)</li>
+            <li>Tap Add or Install</li>
+          </ul>
+        </section>
+
+        <section>
           <h2 className="text-lg font-semibold text-brand-navy mb-2">Frugull Free</h2>
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>One live post per business, per subcategory</li>
