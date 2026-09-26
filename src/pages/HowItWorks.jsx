@@ -56,14 +56,14 @@ export default function HowItWorks() {
               Tap the Share button (the square with an arrow pointing up). On newer iOS
               versions, tap ••• first, then Share
             </li>
-            <li>Scroll down and tap Add to Home Screen, then tap Add</li>
+            <li>Scroll down and tap Add to Home Screen; tap Add</li>
           </ul>
 
           <h3 className="text-sm font-semibold text-brand-navy mb-1.5">Android</h3>
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>Open frugull.com in Chrome</li>
             <li>Tap the ⋮ menu in the top-right corner</li>
-            <li>Tap Add to Home screen, then tap Add</li>
+            <li>Tap Add to Home screen; tap Add</li>
           </ul>
         </section>
 
