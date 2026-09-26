@@ -1,18 +1,54 @@
 import { useEffect, useState } from 'react';
-import { fetchSubscriptionStatus, activateUnlimited, cancelUnlimited } from '../api/subscriptions';
-import { fetchCreditBalance, purchaseCredits } from '../api/credits';
+import { fetchSubscriptionStatus, cancelUnlimited } from '../api/subscriptions';
+import { fetchCreditBalance } from '../api/credits';
+import { startCheckout } from '../api/billing';
 
 export default function MembershipSection() {
   const [subscription, setSubscription] = useState(null);
   const [credits, setCredits] = useState(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
 
   const [billingInterval, setBillingInterval] = useState('monthly');
-  const [autoRenew, setAutoRenew] = useState(true);
 
   useEffect(() => {
     loadStatus();
+
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get('checkout');
+    const timers = [];
+
+    if (checkout === 'success') {
+      setNotice('Payment received. Updating your membership…');
+      [1500, 4000, 8000].forEach((delay) => {
+        timers.push(setTimeout(loadStatus, delay));
+      });
+      timers.push(setTimeout(() => setNotice(''), 9000));
+    } else if (checkout === 'canceled') {
+      setNotice('Checkout canceled. You were not charged.');
+      timers.push(setTimeout(() => setNotice(''), 6000));
+    }
+
+    if (checkout) {
+      params.delete('checkout');
+      const query = params.toString();
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + (query ? `?${query}` : '') + window.location.hash
+      );
+    }
+
+    function handlePageShow(e) {
+      if (e.persisted) setBusy(false);
+    }
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      timers.forEach(clearTimeout);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, []);
 
   async function loadStatus() {
@@ -25,23 +61,25 @@ export default function MembershipSection() {
     }
   }
 
-  async function handleActivate() {
+  async function handleCheckout(product, fallbackMessage) {
     setBusy(true);
     setError('');
     try {
-      const sub = await activateUnlimited(billingInterval, autoRenew);
-      setSubscription({
-        plan: sub.plan,
-        status: sub.status,
-        billingInterval: sub.billing_interval,
-        autoRenew: sub.auto_renew,
-        currentPeriodEnd: sub.current_period_end,
-      });
-    } catch {
-      setError('Could not activate Frugull Unlimited. Please try again.');
-    } finally {
+      const url = await startCheckout(product);
+      window.location.href = url;
+    } catch (err) {
+      setError(err?.response?.data?.error || fallbackMessage);
       setBusy(false);
     }
+  }
+
+  function handleUpgrade() {
+    const product = billingInterval === 'six_month' ? 'unlimited_six_month' : 'unlimited_monthly';
+    handleCheckout(product, 'Could not start checkout. Please try again.');
+  }
+
+  function handleBuyCredits() {
+    handleCheckout('credits_five', 'Could not start checkout. Please try again.');
   }
 
   async function handleCancel() {
@@ -50,21 +88,8 @@ export default function MembershipSection() {
     try {
       await cancelUnlimited();
       await loadStatus();
-    } catch {
-      setError('Could not cancel. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleBuyCredits(pack) {
-    setBusy(true);
-    setError('');
-    try {
-      const result = await purchaseCredits(pack);
-      setCredits(result.credits);
-    } catch {
-      setError('Could not complete credit purchase. Please try again.');
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Could not cancel. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -77,6 +102,7 @@ export default function MembershipSection() {
       <div className="max-w-sm mx-auto">
         <p className="text-brand-navy font-medium text-sm px-4 mb-3">Membership</p>
 
+        {notice && <p className="text-brand-navy text-sm px-4 mb-3">{notice}</p>}
         {error && <p className="text-red-500 text-sm px-4 mb-3">{error}</p>}
 
         <div className="px-4">
@@ -84,11 +110,16 @@ export default function MembershipSection() {
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <p className="text-brand-navy font-semibold">Frugull Unlimited</p>
               <p className="text-brand-gray text-sm mt-1">
-                {subscription.billingInterval === 'six_month' ? '6-month plan' : 'Monthly plan'} ·{' '}
-                {subscription.autoRenew ? 'Auto-renews' : 'Ends'} on{' '}
-                {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                {subscription.billingInterval === 'six_month' ? '6-month plan' : 'Monthly plan'}
+                {subscription.currentPeriodEnd && (
+                  <>
+                    {' · '}
+                    {subscription.autoRenew ? 'Auto-renews' : 'Ends'} on{' '}
+                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </>
+                )}
               </p>
-              {subscription.autoRenew && (
+              {subscription.autoRenew && subscription.currentPeriodEnd && (
                 <button
                   onClick={handleCancel}
                   disabled={busy}
@@ -106,7 +137,7 @@ export default function MembershipSection() {
               </p>
 
               <p className="text-brand-navy font-medium text-sm mb-2">Upgrade to Unlimited</p>
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => setBillingInterval('monthly')}
                   className={`flex-1 rounded-lg py-2 text-sm font-medium ${
@@ -129,22 +160,16 @@ export default function MembershipSection() {
                 </button>
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-brand-gray mb-4">
-                <input
-                  type="checkbox"
-                  checked={autoRenew}
-                  onChange={(e) => setAutoRenew(e.target.checked)}
-                />
-                Auto-renew
-              </label>
-
               <button
-                onClick={handleActivate}
+                onClick={handleUpgrade}
                 disabled={busy}
                 className="w-full rounded-xl bg-brand-navy text-white font-medium py-3 disabled:opacity-50"
               >
-                Activate Frugull Unlimited
+                Upgrade to Frugull Unlimited
               </button>
+              <p className="text-brand-gray text-xs mt-2 text-center">
+                Renews automatically. Turn off anytime.
+              </p>
             </div>
           )}
 
@@ -154,8 +179,8 @@ export default function MembershipSection() {
               {credits ?? 0} credit{credits === 1 ? '' : 's'} available · each covers one
               business + subcategory slot for up to 30 days
             </p>
-             <button
-              onClick={() => handleBuyCredits('five')}
+            <button
+              onClick={handleBuyCredits}
               disabled={busy}
               className="w-full rounded-lg border-2 border-brand-navy text-brand-navy font-medium py-2 text-sm hover:bg-brand-navy hover:text-white transition-colors disabled:opacity-50"
             >
