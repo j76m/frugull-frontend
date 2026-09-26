@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchSubscriptionStatus, cancelUnlimited } from '../api/subscriptions';
+import { fetchSubscriptionStatus, cancelUnlimited, resumeUnlimited } from '../api/subscriptions';
 import { fetchCreditBalance } from '../api/credits';
 import { startCheckout } from '../api/billing';
 
@@ -11,6 +11,7 @@ export default function MembershipSection() {
   const [busy, setBusy] = useState(false);
 
   const [billingInterval, setBillingInterval] = useState('monthly');
+  const [autoRenew, setAutoRenew] = useState(true);
 
   useEffect(() => {
     loadStatus();
@@ -61,35 +62,42 @@ export default function MembershipSection() {
     }
   }
 
-  async function handleCheckout(product, fallbackMessage) {
+  async function handleCheckout(product, renew) {
     setBusy(true);
     setError('');
     try {
-      const url = await startCheckout(product);
+      const url = await startCheckout(product, renew);
       window.location.href = url;
     } catch (err) {
-      setError(err?.response?.data?.error || fallbackMessage);
+      setError(err?.response?.data?.error || 'Could not start checkout. Please try again.');
       setBusy(false);
     }
   }
 
   function handleUpgrade() {
     const product = billingInterval === 'six_month' ? 'unlimited_six_month' : 'unlimited_monthly';
-    handleCheckout(product, 'Could not start checkout. Please try again.');
+    handleCheckout(product, autoRenew);
   }
 
   function handleBuyCredits() {
-    handleCheckout('credits_five', 'Could not start checkout. Please try again.');
+    handleCheckout('credits_five', true);
   }
 
-  async function handleCancel() {
+  async function handleToggleAutoRenew(turnOn) {
     setBusy(true);
     setError('');
     try {
-      await cancelUnlimited();
+      if (turnOn) {
+        await resumeUnlimited();
+      } else {
+        await cancelUnlimited();
+      }
       await loadStatus();
     } catch (err) {
-      setError(err?.response?.data?.error || 'Could not cancel. Please try again.');
+      setError(
+        err?.response?.data?.error ||
+          `Could not turn ${turnOn ? 'on' : 'off'} auto-renew. Please try again.`
+      );
     } finally {
       setBusy(false);
     }
@@ -119,13 +127,13 @@ export default function MembershipSection() {
                   </>
                 )}
               </p>
-              {subscription.autoRenew && subscription.currentPeriodEnd && (
+              {subscription.currentPeriodEnd && (
                 <button
-                  onClick={handleCancel}
+                  onClick={() => handleToggleAutoRenew(!subscription.autoRenew)}
                   disabled={busy}
                   className="mt-3 text-sm text-brand-link underline disabled:opacity-50"
                 >
-                  Turn off auto-renew
+                  {subscription.autoRenew ? 'Turn off auto-renew' : 'Turn on auto-renew'}
                 </button>
               )}
             </div>
@@ -137,7 +145,7 @@ export default function MembershipSection() {
               </p>
 
               <p className="text-brand-navy font-medium text-sm mb-2">Upgrade to Unlimited</p>
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-3">
                 <button
                   onClick={() => setBillingInterval('monthly')}
                   className={`flex-1 rounded-lg py-2 text-sm font-medium ${
@@ -160,6 +168,15 @@ export default function MembershipSection() {
                 </button>
               </div>
 
+              <label className="flex items-center gap-2 text-sm text-brand-gray mb-4">
+                <input
+                  type="checkbox"
+                  checked={autoRenew}
+                  onChange={(e) => setAutoRenew(e.target.checked)}
+                />
+                Auto-renew
+              </label>
+
               <button
                 onClick={handleUpgrade}
                 disabled={busy}
@@ -167,9 +184,6 @@ export default function MembershipSection() {
               >
                 Upgrade to Frugull Unlimited
               </button>
-              <p className="text-brand-gray text-xs mt-2 text-center">
-                Renews automatically. Turn off anytime.
-              </p>
             </div>
           )}
 
