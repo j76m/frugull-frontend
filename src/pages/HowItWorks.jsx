@@ -20,7 +20,7 @@ export default function HowItWorks() {
             the community, not algorithms or paid ads. Snap a photo of a deal, sale, or piece
             of local info, tag it, and pin it to the map for others to find. I started
             Frugull to take the in-store and window advertising businesses already have and
-            extend their reach beyond the people who happen to walk by, putting it in front of
+            extend their reach beyond the people who happen to walk by, putting them in front of
             anyone searching for exactly that kind of info.{' '}
             <span className="font-semibold text-brand-navy">Local, Organized.</span>
           </p>
