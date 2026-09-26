@@ -238,7 +238,7 @@ export default function MembershipSection() {
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <p className="text-brand-navy font-semibold">Frugull Free</p>
               <p className="text-brand-gray text-sm mt-1 mb-4">
-                1 post per business + subcategory every 7 days.
+                1 post per business per subcategory every 7 days.
               </p>
 
               <p className="text-brand-navy font-medium text-sm mb-2">Upgrade to Unlimited</p>
@@ -291,7 +291,7 @@ export default function MembershipSection() {
             <p className="text-brand-navy font-semibold">Credits</p>
             <p className="text-brand-gray text-sm mt-1 mb-4">
               {credits ?? 0} credit{credits === 1 ? '' : 's'} available · each covers one
-              business + subcategory slot for up to 30 days
+              business per subcategory for up to 30 days
             </p>
             <button
               onClick={handleBuyCredits}
