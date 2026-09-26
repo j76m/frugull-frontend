@@ -17,12 +17,11 @@ export default function HowItWorks() {
         <section>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
             Frugull is a hyper-localized map of real, local deals and happenings — built by
-            the community, not algorithms or paid ads. Snap a photo of a deal,
-            sale, or piece of local info, tag it, and pin it to the map for others
-            nearby to find. I started Frugull to take the in-store or window advertising businesses
-            already have and
-            extend its reach beyond just the people who happen to walk by it, by putting it in
-            front of anyone searching for exactly that kind of info.{' '}
+            the community, not algorithms or paid ads. Snap a photo of a deal, sale, or piece
+            of local info, tag it, and pin it to the map for others nearby to find. I started
+            Frugull to take the in-store and window advertising businesses already have and
+            extend their reach beyond the people who happen to walk by, putting it in front of
+            anyone nearby searching for exactly that kind of info.{' '}
             <span className="font-semibold text-brand-navy">Local, Organized.</span>
           </p>
           <p className="text-brand-gray text-sm italic">
