@@ -247,8 +247,8 @@ export default function MembershipSection() {
                   onClick={() => setBillingInterval('monthly')}
                   className={`flex-1 rounded-lg py-2 text-sm font-medium ${
                     billingInterval === 'monthly'
-                      ? 'bg-brand-navy text-white'
-                      : 'bg-slate-100 text-brand-navy'
+                      ? 'bg-brand-navy text-white border-2 border-brand-navy'
+                      : 'bg-slate-100 text-brand-navy border-2 border-brand-navy/30'
                   }`}
                 >
                   $30/mo
@@ -257,8 +257,8 @@ export default function MembershipSection() {
                   onClick={() => setBillingInterval('six_month')}
                   className={`flex-1 rounded-lg py-2 text-sm font-medium ${
                     billingInterval === 'six_month'
-                      ? 'bg-brand-navy text-white'
-                      : 'bg-slate-100 text-brand-navy'
+                      ? 'bg-brand-navy text-white border-2 border-brand-navy'
+                      : 'bg-slate-100 text-brand-navy border-2 border-brand-navy/30'
                   }`}
                 >
                   $150/6mo
