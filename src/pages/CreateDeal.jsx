@@ -83,6 +83,11 @@ export default function CreateDeal() {
   const [discountTags, setDiscountTags] = useState([]);
   const [validDays, setValidDays] = useState([]);
 
+  // Frugull Exclusive: a paid-post flag meaning redemption requires
+  // showing the deal photo to the business. Independent of "Photo says
+  // it all" - both can be checked at once.
+  const [isFrugullExclusive, setIsFrugullExclusive] = useState(false);
+
   const [allowance, setAllowance] = useState(null);
   const [allowanceLoading, setAllowanceLoading] = useState(false);
   const [durationDays, setDurationDays] = useState(null);
@@ -132,6 +137,14 @@ export default function CreateDeal() {
   // only categories (Help Wanted, Community Happenings) always post as
   // General Info, everything else always posts as a Deal.
   const postType = infoOnly ? 'info' : 'deal';
+
+  // Frugull Exclusive is offered on paid posts only: any Unlimited
+  // account (including comped), or a post that will be paid with a
+  // credit. Mirrors the server-side rule in dealsController.postDeal,
+  // which is the real enforcement. Hidden for info-only categories,
+  // since those aren't redeemable offers.
+  const canMarkExclusive =
+    !infoOnly && (plan === 'unlimited' || allowance?.method === 'credit');
 
   useEffect(() => {
     if (!usesGpsLocation) return;
@@ -292,6 +305,9 @@ export default function CreateDeal() {
         eventEndDate: isCommunityHappenings && happeningsMode === 'range' ? eventEndDate : undefined,
         isCommunityHappenings,
         additionalTags: plan === 'unlimited' && validAdditionalTags.length > 0 ? validAdditionalTags : undefined,
+        // Only sent when currently eligible - if the poster checked it and
+        // then switched to an ineligible category/location, it drops off.
+        isFrugullExclusive: canMarkExclusive && isFrugullExclusive ? true : undefined,
       });
 
       try {
@@ -538,6 +554,18 @@ export default function CreateDeal() {
             />
             <span className="text-brand-gray text-sm">Photo says it all — just use "See photo"</span>
           </label>
+          {canMarkExclusive && (
+            <label className="flex items-center gap-2 mb-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isFrugullExclusive}
+                onChange={(e) => setIsFrugullExclusive(e.target.checked)}
+                className="w-4 h-4 accent-brand-link cursor-pointer"
+              />
+              <span className="text-brand-navy text-sm font-medium">Frugull Exclusive Deal</span>
+              <span className="text-brand-gray text-xs">— customers show this photo to redeem</span>
+            </label>
+          )}
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
