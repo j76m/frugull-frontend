@@ -296,7 +296,7 @@ export default function MembershipSection() {
             <button
               onClick={handleBuyCredits}
               disabled={busy}
-              className="w-full rounded-lg bg-slate-100 text-brand-navy font-semibold py-3 text-sm hover:bg-brand-navy hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full rounded-lg border-2 border-brand-navy bg-brand-navy/10 text-brand-navy font-semibold py-3 text-sm hover:bg-brand-navy hover:text-white transition-colors cursor-pointer disabled:opacity-50"
             >
               Buy 5 — $15
             </button>
