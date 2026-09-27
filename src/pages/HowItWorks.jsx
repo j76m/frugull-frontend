@@ -15,7 +15,7 @@ export default function HowItWorks() {
         </div>
 
         <section>
-          <p className="text-brand-navy text-sm font-semibold mb-3">
+          <p className="text-brand-gray text-sm leading-relaxed mb-3">
             Welcome to Frugull,
           </p>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
