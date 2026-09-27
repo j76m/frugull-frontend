@@ -18,6 +18,9 @@ export async function fetchPreviewAllowance(businessId, subcategoryId) {
 // discountTags is optional for any tier: array of 'college' | 'teacher' |
 // 'senior' | 'military' | 'first_responder'.
 // postType is 'deal' (default) or 'info'.
+// NOTE: this is an explicit field list - any new field the Post form
+// sends must also be added here, or it's silently dropped before
+// reaching the backend.
 export async function createDeal({
   businessId,
   categoryId,
@@ -30,7 +33,10 @@ export async function createDeal({
   postType,
   isEventDate,
   eventDate,
+  eventEndDate,
+  isCommunityHappenings,
   additionalTags,
+  isFrugullExclusive,
 }) {
   const { data } = await client.post('/deals', {
     businessId,
@@ -44,7 +50,10 @@ export async function createDeal({
     postType,
     isEventDate,
     eventDate,
+    eventEndDate,
+    isCommunityHappenings,
     additionalTags,
+    isFrugullExclusive,
   });
   return data.deal ?? data;
 }
