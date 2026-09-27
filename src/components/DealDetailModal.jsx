@@ -321,6 +321,17 @@ export default function DealDetailModal({
           </div>
         )}
 
+        {/* Frugull Exclusive: redemption works by showing this screen - there's
+            no coupon/code system - so this sits directly under the photo, full
+            width, before anything else is read. Kept off the photo itself so it
+            never covers the handwritten deal. */}
+        {deal.is_frugull_exclusive && (
+          <div className="bg-brand-navy text-white px-5 py-3">
+            <p className="font-bold text-sm tracking-wide">✨ FRUGULL EXCLUSIVE DEAL</p>
+            <p className="text-sm mt-0.5">Show this photo to the business to get this deal.</p>
+          </div>
+        )}
+
         <div className="p-5">
           {!deal.image_url && (
             <div className="flex justify-between mb-2">
