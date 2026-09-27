@@ -240,6 +240,23 @@ export default function CreateDeal() {
     setAdditionalTags([]);
   }
 
+  // Switching scheduling mode clears any picked dates. The event date
+  // inputs below always mount blank (defaultValue="") so the calendar's
+  // Reset button clears them - clearing state here keeps state matching
+  // what's on screen when a different mode's inputs mount.
+  function changeHappeningsMode(mode) {
+    if (mode === happeningsMode) return;
+    setHappeningsMode(mode);
+    setEventDate('');
+    setEventEndDate('');
+  }
+
+  function changeActivitiesEventMode(nextIsEventDate) {
+    if (nextIsEventDate === isEventDate) return;
+    setIsEventDate(nextIsEventDate);
+    setEventDate('');
+  }
+
   function toggleDiscountTag(value) {
     setDiscountTags((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
@@ -254,6 +271,7 @@ export default function CreateDeal() {
 
   function handleDurationDateChange(e) {
     if (!allowance || allowance.method === 'free') return;
+    if (!e.target.value) return;
     const chosen = new Date(e.target.value + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -262,12 +280,21 @@ export default function CreateDeal() {
     setDurationDays(clamped);
   }
 
+  // A mode that needs a date can't post without one - otherwise a
+  // cleared Specific Date would silently fall through to Recurring
+  // (180 days) on the backend.
+  const missingEventDate =
+    (isCommunityHappenings && happeningsMode === 'date' && !eventDate) ||
+    (isCommunityHappenings && happeningsMode === 'range' && (!eventDate || !eventEndDate)) ||
+    (isActivities && isEventDate && !eventDate);
+
   const canSubmit =
     photoFile &&
     businessRecord &&
     categoryId &&
     subcategoryId &&
     caption.trim().length > 0 &&
+    !missingEventDate &&
     !submitting;
 
   async function handleSubmit(e) {
@@ -643,14 +670,17 @@ export default function CreateDeal() {
           )}
         </div>
 
-        {/* 7. Expiration / Duration - the final cap on the post */}
+        {/* 7. Expiration / Duration - the final cap on the post.
+            Event date inputs use defaultValue="" (not value=) so the
+            calendar's Reset button clears them - with a controlled value,
+            iOS Reset restores the currently picked date instead. */}
         <div>
           {isCommunityHappenings ? (
             <>
               <div className="flex flex-wrap justify-center gap-2 mb-3">
                 <button
                   type="button"
-                  onClick={() => setHappeningsMode('date')}
+                  onClick={() => changeHappeningsMode('date')}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     happeningsMode === 'date'
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -661,7 +691,7 @@ export default function CreateDeal() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHappeningsMode('range')}
+                  onClick={() => changeHappeningsMode('range')}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     happeningsMode === 'range'
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -672,7 +702,7 @@ export default function CreateDeal() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHappeningsMode('recurring')}
+                  onClick={() => changeHappeningsMode('recurring')}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     happeningsMode === 'recurring'
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -688,7 +718,7 @@ export default function CreateDeal() {
                   <label className="block text-sm text-slate-600 mb-2">Date of event</label>
                   <input
                     type="date"
-                    value={eventDate}
+                    defaultValue=""
                     min={toDateInputValue(today)}
                     onChange={(e) => setEventDate(e.target.value)}
                     className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
@@ -705,7 +735,7 @@ export default function CreateDeal() {
                     <label className="block text-sm text-slate-600 mb-2">Starts</label>
                     <input
                       type="date"
-                      value={eventDate}
+                      defaultValue=""
                       min={toDateInputValue(today)}
                       onChange={(e) => setEventDate(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
@@ -715,7 +745,7 @@ export default function CreateDeal() {
                     <label className="block text-sm text-slate-600 mb-2">Ends</label>
                     <input
                       type="date"
-                      value={eventEndDate}
+                      defaultValue=""
                       min={eventDate || toDateInputValue(today)}
                       onChange={(e) => setEventEndDate(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
@@ -739,7 +769,7 @@ export default function CreateDeal() {
               <div className="flex justify-center gap-2 mb-3">
                 <button
                   type="button"
-                  onClick={() => setIsEventDate(false)}
+                  onClick={() => changeActivitiesEventMode(false)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     !isEventDate
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -750,7 +780,7 @@ export default function CreateDeal() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsEventDate(true)}
+                  onClick={() => changeActivitiesEventMode(true)}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     isEventDate
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -766,7 +796,7 @@ export default function CreateDeal() {
                   <label className="block text-sm text-slate-600 mb-2">Date of event</label>
                   <input
                     type="date"
-                    value={eventDate}
+                    defaultValue=""
                     min={toDateInputValue(today)}
                     onChange={(e) => setEventDate(e.target.value)}
                     className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
