@@ -27,15 +27,16 @@ const POST_TYPE_OPTIONS = [
 // square and star need hand-defined paths). Both are normalized to roughly
 // fit within the same -1..1 unit bounds as the built-in CIRCLE, so a
 // shared "scale" value keeps all three shapes visually comparable in size.
-const SQUARE_PATH = 'M -0.85,-0.85 0.85,-0.85 0.85,0.85 -0.85,0.85 Z';
+const U_PATH =
+  'M -0.85,-0.95 L -0.3,-0.95 L -0.3,0.15 C -0.3,0.45 0.3,0.45 0.3,0.15 L 0.3,-0.95 L 0.85,-0.95 L 0.85,0.15 C 0.85,1.1 -0.85,1.1 -0.85,0.15 Z';
+const PAID_VIA = new Set(['unlimited', 'credit']);
 const STAR_PATH =
   'M 0,-1 0.235,-0.324 0.951,-0.309 0.380,0.124 0.588,0.809 0,0.4 -0.588,0.809 -0.380,0.124 -0.951,-0.309 -0.235,-0.324 Z';
 
-// Shape communicates tier/post-type, color always communicates category -
-// the two are independent so category recognition never breaks, even for
-// an Unlimited-tier post. Unlimited always renders as a star regardless of
-// post_type (Deal or Info) - which specific type it is is one tap away in
-// the detail view, so the star doesn't need to also carry that distinction.
+// Shape communicates tier, color always communicates category - the two
+// are independent so category recognition never breaks. Frugull Exclusive
+// = U (largest, drawn on top), paid (Credits/Unlimited) = star, Free = dot.
+// Deal vs Info is no longer shown by shape - category color implies it.
 function getMarkerIcon(deal) {
   const color = getCategoryColor(deal.category_name);
   const base = {
@@ -46,13 +47,19 @@ function getMarkerIcon(deal) {
     strokeWeight: 2,
   };
 
-  if (deal.posted_via === 'unlimited') {
+  if (deal.is_frugull_exclusive) {
+    return { ...base, path: U_PATH, scale: 11, strokeWeight: 1.5 };
+  }
+  if (PAID_VIA.has(deal.posted_via)) {
     return { ...base, path: STAR_PATH, strokeWeight: 1.5 };
   }
-  if (deal.post_type === 'info') {
-    return { ...base, path: SQUARE_PATH };
-  }
   return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE };
+}
+
+function getMarkerZIndex(deal) {
+  if (deal.is_frugull_exclusive) return 3;
+  if (PAID_VIA.has(deal.posted_via)) return 2;
+  return 1;
 }
 
 export default function Search() {
@@ -298,6 +305,7 @@ export default function Search() {
                   title={deal.business_name}
                   onClick={() => handleMarkerClick(deal)}
                   icon={getMarkerIcon(deal)}
+                  zIndex={getMarkerZIndex(deal)}
                 />
               ))}
             </DealMap>
