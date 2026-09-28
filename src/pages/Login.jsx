@@ -188,6 +188,9 @@ export default function Login() {
                 placeholder="123456"
                 className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link tracking-widest text-center text-lg"
               />
+              <p className="text-slate-500 text-xs text-center mt-2">
+                Not seeing it? Open your email app to refresh, or check spam.
+              </p>
             </div>
             {isNewUser && (
               <div>
