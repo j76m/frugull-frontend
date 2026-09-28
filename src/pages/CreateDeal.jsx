@@ -118,10 +118,7 @@ export default function CreateDeal() {
 
   useEffect(() => {
     fetchCategories()
-      .then((results) => {
-        const HIDDEN_CATEGORIES = new Set(['Home Care']);
-        setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
-      })
+      .then((results) => setCategories(results))
       .catch(() => setCategoriesError('Could not load categories.'));
 
     fetchSubscriptionStatus()
