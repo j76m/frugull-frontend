@@ -135,11 +135,11 @@ export default function CreateDeal() {
   const isActivities = selectedCategory?.name === 'Activities';
   const isCommunityHappenings = selectedCategory?.name === 'Community Happenings';
   const allowsEventDate = isActivities || isCommunityHappenings;
-  const infoOnly = selectedCategory?.name === 'Help Wanted' || selectedCategory?.name === 'Community Happenings';
+  const infoOnly = !!selectedCategory && selectedCategory.post_type !== 'deal';
 
-  // Post type is fully derived from category, never user-chosen - info-
-  // only categories (Help Wanted, Community Happenings) always post as
-  // General Info, everything else always posts as a Deal.
+  // Post type is fully derived from category, never user-chosen - any
+  // category whose post_type isn't 'deal' (Happenings, Farm Stands, Help
+  // Wanted) posts as General Info, everything else posts as a Deal.
   const postType = infoOnly ? 'info' : 'deal';
 
   // Frugull Exclusive is offered on paid posts only: any Unlimited
