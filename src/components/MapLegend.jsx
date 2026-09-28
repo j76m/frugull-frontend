@@ -30,13 +30,11 @@ export default function MapLegend({ categories }) {
           <span>Public Post</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-brand-gray flex-shrink-0">★</span>
+          <span className="text-brand-gray flex-shrink-0">▲</span>
           <span>Featured</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <svg viewBox="-1 -1 2 2" className="w-3 h-3 flex-shrink-0 fill-brand-gray">
-            <path d="M -0.85,-0.95 L -0.3,-0.95 L -0.3,0.15 C -0.3,0.45 0.3,0.45 0.3,0.15 L 0.3,-0.95 L 0.85,-0.95 L 0.85,0.15 C 0.85,1.1 -0.85,1.1 -0.85,0.15 Z" />
-          </svg>
+          <span className="text-brand-gray flex-shrink-0">★</span>
           <span>Frugull Exclusive</span>
         </div>
       </div>

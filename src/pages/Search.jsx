@@ -27,20 +27,20 @@ const POST_TYPE_OPTIONS = [
 // square and star need hand-defined paths). Both are normalized to roughly
 // fit within the same -1..1 unit bounds as the built-in CIRCLE, so a
 // shared "scale" value keeps all three shapes visually comparable in size.
-const U_PATH =
-  'M -0.85,-0.95 L -0.3,-0.95 L -0.3,0.15 C -0.3,0.45 0.3,0.45 0.3,0.15 L 0.3,-0.95 L 0.85,-0.95 L 0.85,0.15 C 0.85,1.1 -0.85,1.1 -0.85,0.15 Z';
+const TRIANGLE_PATH = 'M 0,-1.08 L 1,0.65 L -1,0.65 Z';
 const PAID_VIA = new Set(['unlimited', 'credit']);
 const STAR_PATH =
   'M 0,-1 0.235,-0.324 0.951,-0.309 0.380,0.124 0.588,0.809 0,0.4 -0.588,0.809 -0.380,0.124 -0.951,-0.309 -0.235,-0.324 Z';
 
 // Shape communicates tier, color always communicates category - the two
-// are independent so category recognition never breaks. Frugull Exclusive
-// = U (largest, drawn on top), paid (Credits/Unlimited) = star, Free = dot.
-// Deal vs Info is no longer shown by shape - category color implies it.
+// are independent so category recognition never breaks. Points increase
+// with tier: Free = dot, paid (Credits/Unlimited) = triangle (upgrade),
+// Frugull Exclusive = star (largest, drawn on top). Deal vs Info is not
+// shown by shape - category color implies it.
 function getMarkerIcon(deal) {
   const color = getCategoryColor(deal.category_name);
   const base = {
-    scale: 9,
+    scale: 11,
     fillColor: color,
     fillOpacity: 1,
     strokeColor: '#FFFFFF',
@@ -48,10 +48,10 @@ function getMarkerIcon(deal) {
   };
 
   if (deal.is_frugull_exclusive) {
-    return { ...base, path: U_PATH, scale: 11, strokeWeight: 1.5 };
+    return { ...base, path: STAR_PATH, scale: 14, strokeWeight: 1.5 };
   }
   if (PAID_VIA.has(deal.posted_via)) {
-    return { ...base, path: STAR_PATH, strokeWeight: 1.5 };
+    return { ...base, path: TRIANGLE_PATH, scale: 12, strokeWeight: 1.5 };
   }
   return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE };
 }
@@ -310,12 +310,13 @@ export default function Search() {
               ))}
             </DealMap>
 
-            {/* Tight white circle backdrop so the mascot pops against busy map tiles */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-20 h-20 rounded-full bg-white flex items-center justify-center">
+            {/* Mascot in the top-right corner - brand touch that stays
+                visible when a deal is open, without covering central pins. */}
+            <div className="absolute top-3 right-3 z-10 w-14 h-14 rounded-full bg-white shadow flex items-center justify-center">
               <SeagullMascot
                 isOpen={!!selectedDeal}
                 onClick={() => setSelectedDealId(null)}
-                className="w-16 h-16"
+                className="w-11 h-11"
               />
             </div>
           </div>
