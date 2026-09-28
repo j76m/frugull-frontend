@@ -312,15 +312,17 @@ export default function Search() {
             {/* Shape legend - floats at the bottom of the map, directly above
                 the category color legend. pointer-events-none so pins
                 underneath stay tappable. */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-3 bg-white/90 rounded-full px-3 py-1.5 shadow text-brand-navy text-xs whitespace-nowrap">
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-brand-gray" />
-                Public Post
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="text-brand-gray">▲</span>
-                Featured
-              </span>
+            <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-1 bg-white/90 rounded-2xl px-3 py-1.5 shadow text-brand-navy text-xs whitespace-nowrap">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-gray" />
+                  Public Post
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-brand-gray">▲</span>
+                  Featured
+                </span>
+              </div>
               <span className="flex items-center gap-1">
                 <span className="text-brand-gray">★</span>
                 Frugull Exclusive
