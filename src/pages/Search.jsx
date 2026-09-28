@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Marker } from '@react-google-maps/api';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
-import SeagullMascot from '../components/SeagullMascot';
 import DealCard from '../components/DealCard';
 import DealMap from '../components/DealMap';
 import DealDetailModal from '../components/DealDetailModal';
@@ -51,7 +50,7 @@ function getMarkerIcon(deal) {
     return { ...base, path: STAR_PATH, scale: 14, strokeWeight: 1.5 };
   }
   if (PAID_VIA.has(deal.posted_via)) {
-    return { ...base, path: TRIANGLE_PATH, scale: 12, strokeWeight: 1.5 };
+    return { ...base, path: TRIANGLE_PATH, scale: 10, strokeWeight: 1.5 };
   }
   return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE };
 }
@@ -310,14 +309,22 @@ export default function Search() {
               ))}
             </DealMap>
 
-            {/* Mascot in the top-right corner - brand touch that stays
-                visible when a deal is open, without covering central pins. */}
-            <div className="absolute top-3 right-3 z-10 w-14 h-14 rounded-full bg-white shadow flex items-center justify-center">
-              <SeagullMascot
-                isOpen={!!selectedDeal}
-                onClick={() => setSelectedDealId(null)}
-                className="w-11 h-11"
-              />
+            {/* Shape legend - floats at the bottom of the map, directly above
+                the category color legend. pointer-events-none so pins
+                underneath stay tappable. */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-3 bg-white/90 rounded-full px-3 py-1.5 shadow text-brand-navy text-xs whitespace-nowrap">
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-brand-gray" />
+                Public Post
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-brand-gray">▲</span>
+                Featured
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-brand-gray">★</span>
+                Frugull Exclusive
+              </span>
             </div>
           </div>
 

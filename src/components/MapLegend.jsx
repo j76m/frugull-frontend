@@ -23,21 +23,6 @@ export default function MapLegend({ categories }) {
           ))}
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-brand-gray text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-brand-gray flex-shrink-0" />
-          <span>Public Post</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-brand-gray flex-shrink-0">▲</span>
-          <span>Featured</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-brand-gray flex-shrink-0">★</span>
-          <span>Frugull Exclusive</span>
-        </div>
-      </div>
     </div>
   );
 }
