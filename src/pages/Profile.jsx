@@ -6,6 +6,7 @@ import RankProgress from '../components/RankProgress';
 import DealCard from '../components/DealCard';
 import DealDetailModal from '../components/DealDetailModal';
 import MembershipSection from '../components/MembershipSection';
+import DealAlertsSection from '../components/DealAlertsSection';
 import { useAuth } from '../context/AuthContext';
 import { TIERS } from '../data/ranks';
 import { getRankIconUrl } from '../utils/rankIcons';
@@ -133,6 +134,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <DealAlertsSection />
 
       <MembershipSection />
 
