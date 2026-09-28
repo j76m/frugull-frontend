@@ -26,6 +26,8 @@ export default function DealAlertsSection() {
   const [radius, setRadius] = useState(10);
   const [selected, setSelected] = useState(new Set());
   const [expanded, setExpanded] = useState(new Set());
+  const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,11 +45,12 @@ export default function DealAlertsSection() {
         setZip(settings.zip || '');
         setRadius(settings.radiusMiles || 10);
         setSelected(ids);
+        setSaved(settings);
         setExpanded(
           new Set(cats.filter((c) => c.subcategories.some((s) => ids.has(s.id))).map((c) => c.id))
         );
       })
-      .catch(() => setError('Could not load deal alerts.'))
+      .catch(() => setError('Could not load email alerts.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -84,6 +87,18 @@ export default function DealAlertsSection() {
     });
   }
 
+  function clearSelections() {
+    setSelected(new Set());
+    setNotice('');
+  }
+
+  // Header summary reflects what's saved, not unsaved edits in progress.
+  const summary = !saved
+    ? ''
+    : saved.enabled
+      ? `On · ${saved.subcategoryIds.length} selected · ${saved.radiusMiles} mi of ${saved.zip}`
+      : 'Off';
+
   async function handleSave() {
     setSaving(true);
     setError('');
@@ -99,13 +114,14 @@ export default function DealAlertsSection() {
       setZip(settings.zip || '');
       setRadius(settings.radiusMiles);
       setSelected(new Set(settings.subcategoryIds));
+      setSaved(settings);
       setNotice(
         settings.enabled
-          ? "Saved. You'll get an email when new matching deals are posted."
-          : 'Saved. Deal alert emails are off.'
+          ? "Saved. You'll get an email when new matching posts go up."
+          : 'Saved. Email alerts are off.'
       );
     } catch (err) {
-      setError(err?.response?.data?.error || 'Could not save deal alerts. Please try again.');
+      setError(err?.response?.data?.error || 'Could not save email alerts. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -186,13 +202,31 @@ export default function DealAlertsSection() {
   return (
     <div className="mt-6 pt-4 border-t border-slate-200">
       <div className="max-w-sm mx-auto">
-        <p className="text-brand-navy font-medium text-sm px-4 mb-3">Deal Alerts</p>
+        <p className="text-brand-navy font-medium text-sm px-4 mb-3">Email Alerts</p>
 
         <div className="px-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="cursor-pointer w-full flex items-center justify-between gap-3 p-4 text-left"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-brand-navy font-semibold">Get new posts by email</p>
+                {summary && <p className="text-brand-gray text-xs mt-0.5">{summary}</p>}
+              </div>
+              {open ? (
+                <ChevronUp size={18} className="text-brand-gray flex-shrink-0" />
+              ) : (
+                <ChevronDown size={18} className="text-brand-gray flex-shrink-0" />
+              )}
+            </button>
+
+            {open && (
+            <div className="px-4 pb-4">
             <p className="text-brand-gray text-sm mb-4">
-              Get an email when new deals you care about are posted near you. One email a day at most,
-              only when something new matches.
+              Pick the deals, happenings, jobs, and farm stands you care about. We'll email you when new
+              ones are posted near you, at most once a day.
             </p>
 
             {loading ? (
@@ -209,7 +243,7 @@ export default function DealAlertsSection() {
                     }}
                     className="w-4 h-4 accent-brand-link cursor-pointer"
                   />
-                  Email me new deals
+                  Send me email alerts
                 </label>
 
                 <label className="block text-brand-navy text-xs font-medium mb-1">Zip code</label>
@@ -247,9 +281,20 @@ export default function DealAlertsSection() {
                   ))}
                 </div>
 
-                <p className="text-brand-navy text-xs font-medium">
-                  Deal types{selected.size > 0 && ` · ${selected.size} selected`}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-brand-navy text-xs font-medium">
+                    Alert me about{selected.size > 0 && ` · ${selected.size} selected`}
+                  </p>
+                  {selected.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearSelections}
+                      className="text-brand-link text-xs font-medium cursor-pointer hover:underline"
+                    >
+                      Clear Selections
+                    </button>
+                  )}
+                </div>
                 {renderGroup(dealCategories, 'Deals')}
                 {renderGroup(otherCategories, null)}
 
@@ -262,12 +307,14 @@ export default function DealAlertsSection() {
                   disabled={saving}
                   className="mt-4 w-full rounded-xl bg-brand-navy text-white font-medium py-3 cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? 'Saving...' : 'Save Deal Alerts'}
+                  {saving ? 'Saving...' : 'Save Alerts'}
                 </button>
                 {user?.email && (
                   <p className="text-brand-gray text-xs mt-2 text-center">Alerts go to {user.email}</p>
                 )}
               </>
+            )}
+            </div>
             )}
           </div>
         </div>
