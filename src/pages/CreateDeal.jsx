@@ -21,6 +21,13 @@ const DISCOUNT_TAGS = [
   { value: 'first_responder', label: 'First Responder' },
 ];
 
+const SHARE_TYPES = [
+  { value: 'deal', label: 'A Deal' },
+  { value: 'happening', label: 'A Community Happening (events, trivia, live music, openings)' },
+  { value: 'farm_stand', label: 'A Farm Stand' },
+  { value: 'help_wanted', label: 'Help Wanted' },
+];
+
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sun' },
   { value: 1, label: 'Mon' },
@@ -67,6 +74,7 @@ export default function CreateDeal() {
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
+  const [shareType, setShareType] = useState(''); // 'deal' | 'happening' | 'farm_stand' | 'help_wanted'
   const [categoryId, setCategoryId] = useState('');
   const [subcategoryId, setSubcategoryId] = useState('');
 
@@ -111,12 +119,7 @@ export default function CreateDeal() {
   useEffect(() => {
     fetchCategories()
       .then((results) => {
-        const HIDDEN_CATEGORIES = new Set([
-          'For Sale by Owner',
-          'Public Art',
-          'Property Rental',
-          'Home Care',
-        ]);
+        const HIDDEN_CATEGORIES = new Set(['Home Care']);
         setCategories(results.filter((c) => !HIDDEN_CATEGORIES.has(c.name)));
       })
       .catch(() => setCategoriesError('Could not load categories.'));
@@ -126,6 +129,7 @@ export default function CreateDeal() {
       .catch(() => setPlan('free'));
   }, []);
 
+  const shareCategories = categories.filter((c) => c.post_type === shareType);
   const selectedCategory = categories.find((c) => String(c.id) === String(categoryId));
   const usesGpsLocation = !!selectedCategory?.requires_gps_location;
   const isActivities = selectedCategory?.name === 'Activities';
@@ -224,7 +228,22 @@ export default function CreateDeal() {
   }
 
   function handleCategoryChange(e) {
-    setCategoryId(e.target.value);
+    applyCategory(e.target.value);
+  }
+
+  function handleShareTypeChange(e) {
+    const nextType = e.target.value;
+    setShareType(nextType);
+    if (nextType && nextType !== 'deal') {
+      const match = categories.find((c) => c.post_type === nextType);
+      applyCategory(match ? String(match.id) : '');
+    } else {
+      applyCategory('');
+    }
+  }
+
+  function applyCategory(newCategoryId) {
+    setCategoryId(newCategoryId);
     setSubcategoryId('');
     setBusiness(null);
     setBusinessRecord(null);
@@ -372,10 +391,29 @@ export default function CreateDeal() {
     <AppLayout>
       <TopNav leftLabel="Cancel" onLeft={() => navigate(-1)} />
       <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-5">
-        {/* 1. Category / Subcategory - drives everything else: whether
-            this is a Deal or Info post, whether location uses business
-            search or GPS, and whether an event date is offered. */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* 1. What are you sharing? - picks the post type first, which
+            limits the category/subtype options below. Deals pick a
+            category then a subtype; every other type has exactly one
+            category, so it's auto-selected and only the subtype shows. */}
+        <div>
+          <label className="block text-sm text-slate-600 mb-1">What are you sharing?</label>
+          <select
+            value={shareType}
+            onChange={handleShareTypeChange}
+            className="w-full rounded-xl bg-white border border-slate-200 px-3 py-3 outline-none focus:ring-2 focus:ring-brand-link"
+          >
+            <option value="">Select...</option>
+            {SHARE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {shareType && (
+        <div className={shareType === 'deal' ? 'grid grid-cols-2 gap-3' : ''}>
+          {shareType === 'deal' && (
           <div>
             <label className="block text-sm text-slate-600 mb-1">Category</label>
             <select
@@ -384,15 +422,18 @@ export default function CreateDeal() {
               className="w-full rounded-xl bg-white border border-slate-200 px-3 py-3 outline-none focus:ring-2 focus:ring-brand-link"
             >
               <option value="">Select...</option>
-              {categories.map((cat) => (
+              {shareCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
               ))}
             </select>
           </div>
+          )}
           <div>
-            <label className="block text-sm text-slate-600 mb-1">Subcategory</label>
+            <label className="block text-sm text-slate-600 mb-1">
+              {shareType === 'deal' ? 'Subcategory' : 'Type'}
+            </label>
             <select
               value={subcategoryId}
               onChange={(e) => setSubcategoryId(e.target.value)}
@@ -408,6 +449,7 @@ export default function CreateDeal() {
             </select>
           </div>
         </div>
+        )}
         {categoriesError && <p className="text-red-500 text-sm">{categoriesError}</p>}
         {selectedCategory && (
           <p className="text-brand-gray text-xs -mt-3">
@@ -435,7 +477,7 @@ export default function CreateDeal() {
                       className="w-full rounded-xl bg-white border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-link"
                     >
                       <option value="">Select category...</option>
-                      {categories.map((cat) => (
+                      {shareCategories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
                         </option>
