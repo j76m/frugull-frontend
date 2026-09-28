@@ -22,10 +22,10 @@ const DISCOUNT_TAGS = [
 ];
 
 const SHARE_TYPES = [
-  { value: 'deal', label: 'A Deal' },
-  { value: 'happening', label: 'A Community Happening (events, trivia, live music, openings)' },
-  { value: 'farm_stand', label: 'A Farm Stand' },
-  { value: 'help_wanted', label: 'Help Wanted' },
+  { value: 'deal', label: 'a Deal' },
+  { value: 'happening', label: 'a Community Happening' },
+  { value: 'help_wanted', label: 'a Job' },
+  { value: 'farm_stand', label: 'a Farm Stand' },
 ];
 
 const DAYS_OF_WEEK = [
