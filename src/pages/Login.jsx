@@ -150,6 +150,7 @@ export default function Login() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -181,6 +182,7 @@ export default function Login() {
                 required
                 autoFocus
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="123456"
