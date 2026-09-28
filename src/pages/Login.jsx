@@ -138,7 +138,7 @@ export default function Login() {
           <p className="text-brand-navy font-semibold text-xl tracking-wide mt-2">
             Local, Organized.
           </p>
-          <p className="text-brand-gray text-sm mt-1">
+          <p className="text-slate-500 text-sm mt-1">
             Deals, happenings, and more around town.
           </p>
         </div>
