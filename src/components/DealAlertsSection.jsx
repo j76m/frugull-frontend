@@ -39,8 +39,15 @@ export default function DealAlertsSection() {
   useEffect(() => {
     Promise.all([fetchAlertSettings(), fetchCategories()])
       .then(([settings, cats]) => {
-        const ids = new Set(settings.subcategoryIds);
-        setCategories(cats);
+        // "Other" is hidden here on purpose - it's a catch-all for posting,
+        // not something anyone would want alerts for. Any previously saved
+        // "Other" selections are dropped on the next save.
+        const visible = cats
+          .map((c) => ({ ...c, subcategories: c.subcategories.filter((s) => s.name !== 'Other') }))
+          .filter((c) => c.subcategories.length > 0);
+        const visibleIds = new Set(visible.flatMap((c) => c.subcategories.map((s) => s.id)));
+        const ids = new Set(settings.subcategoryIds.filter((id) => visibleIds.has(id)));
+        setCategories(visible);
         setEnabled(settings.enabled);
         setZip(settings.zip || '');
         setRadius(settings.radiusMiles || 10);
