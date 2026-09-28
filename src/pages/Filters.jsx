@@ -43,11 +43,9 @@ const DEAL_CATEGORY_NAMES = new Set([
 export default function Filters() {
   const navigate = useNavigate();
   const {
-    allSelected,
     selectedSubs,
     selectedDiscountTags,
     selectedDays,
-    toggleAll,
     toggleSub,
     toggleDiscountTag,
     toggleDay,
@@ -214,7 +212,9 @@ export default function Filters() {
       <TopNav leftLabel="Back" onLeft={() => navigate(-1)} rightLabel="Apply" onRight={() => navigate(-1)} />
       <div className="max-w-md mx-auto p-4">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-brand-gray text-sm">Select categories to show on the map.</p>
+          <p className="text-brand-gray text-sm">
+            {selectedSubs.size === 0 ? 'Showing everything. Pick categories to narrow it down.' : 'Showing selected categories.'}
+          </p>
           <button
             type="button"
             onClick={clearSelections}
@@ -223,16 +223,6 @@ export default function Filters() {
             Clear Selections
           </button>
         </div>
-
-        <label className="flex items-center gap-2 py-3 border-b border-slate-200 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={toggleAll}
-            className="w-4 h-4 accent-brand-link cursor-pointer"
-          />
-          <span className="text-brand-navy font-semibold">All</span>
-        </label>
 
         {loadError && <p className="text-red-500 text-sm text-center mt-4">{loadError}</p>}
 
