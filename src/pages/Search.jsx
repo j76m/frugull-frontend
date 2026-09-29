@@ -241,11 +241,11 @@ export default function Search() {
     return [...best.values()];
   }, [visibleDeals]);
 
-  // The list view shows one row per actual POST, not one row per tag -
-  // unlike the map, where a multi-tagged deal correctly needs a separate
-  // pin per tag/color. visibleDeals can contain the same deal.id more than
-  // once (once per tag), so de-dupe by id here and merge all of that
-  // post's tags into a single subcategory line for display.
+  // The list view shows one row per actual POST, not one row per tag.
+  // visibleDeals can contain the same deal.id more than once (once per
+  // tag), so de-dupe by id here and merge all of that post's tags into a
+  // single subcategory line for display. The map is separate: it
+  // collapses to one pin per business (see mapPins).
   const dedupedListDeals = useMemo(() => {
     const byId = new Map();
     visibleDeals.forEach((deal) => {
