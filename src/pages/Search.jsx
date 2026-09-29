@@ -61,6 +61,14 @@ function getMarkerZIndex(deal) {
   return 1;
 }
 
+// Lower = higher tier. Exclusive > Unlimited > Credit > Free.
+function getTierRank(deal) {
+  if (deal.is_frugull_exclusive) return 0;
+  if (deal.posted_via === 'unlimited') return 1;
+  if (deal.posted_via === 'credit') return 2;
+  return 3;
+}
+
 export default function Search() {
   const navigate = useNavigate();
   const { status } = useAuth();
@@ -139,21 +147,23 @@ export default function Search() {
     }
   }
 
-  // Tapping any pin checks what's really stacked at that business+
-  // subcategory (respecting the active All/Deal/Info filter) - if more
-  // than one post is active there, opens the carousel; if only one,
-  // skips straight to the regular single-deal view.
+  // Tapping a pin loads every active post at that business, keeps only
+  // the ones matching the current filters (same rules as the map), and
+  // de-dupes multi-tagged posts. More than one -> carousel, already
+  // ordered by tier by the backend; only one -> single-deal view.
   async function handleMarkerClick(deal) {
     try {
-      const atLocation = await fetchDealsAtLocation(
-        deal.business_id,
-        deal.subcategory_id,
-        postTypeFilter
-      );
-      if (atLocation.length > 1) {
-        setLocationDeals(atLocation);
+      const atLocation = await fetchDealsAtLocation(deal.business_id, null, postTypeFilter);
+      const seen = new Set();
+      const matching = atLocation.filter((d) => {
+        if (!matchesFilters(d) || seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+      if (matching.length > 1) {
+        setLocationDeals(matching);
       } else {
-        setSelectedDealId(deal.id);
+        setSelectedDealId(matching[0]?.id ?? deal.id);
       }
     } catch {
       // Fallback: if the lookup fails for any reason, still show the
@@ -189,24 +199,47 @@ export default function Search() {
     setFocusPosition(city.position);
   }
 
-  const visibleDeals = (allSelected ? deals : deals.filter((deal) => selectedSubs.has(deal.subcategory_id)))
-    .filter(
-      (deal) =>
-        selectedDiscountTags.size === 0 ||
-        (deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
-    )
-    .filter((deal) => {
-      // No day filter selected -> show everything, regardless of each
-      // deal's own day tagging.
-      if (selectedDays.size === 0) return true;
-      // A day filter IS active -> only show deals explicitly tagged for
-      // at least one selected day. Untagged/"any day" deals are excluded
-      // here on purpose - mixing them in would clutter a day-specific
-      // search and defeat the point of filtering by day.
+  // One filter function drives BOTH the map pins and the carousel, so
+  // what a pin shows always matches what opens when it's tapped.
+  function matchesFilters(deal) {
+    if (!allSelected && !selectedSubs.has(deal.subcategory_id)) return false;
+    if (
+      selectedDiscountTags.size > 0 &&
+      !(deal.discount_tags || []).some((tag) => selectedDiscountTags.has(tag))
+    ) {
+      return false;
+    }
+    // No day filter -> show everything. A day filter IS active -> only
+    // deals explicitly tagged for a selected day; untagged/"any day"
+    // deals are excluded on purpose so day-specific searches stay clean.
+    if (selectedDays.size > 0) {
       if (!deal.valid_days_of_week || deal.valid_days_of_week.length === 0) return false;
-      return deal.valid_days_of_week.some((day) => selectedDays.has(day));
-    })
-    .filter((deal) => postTypeFilter === null || deal.post_type === postTypeFilter);
+      if (!deal.valid_days_of_week.some((day) => selectedDays.has(day))) return false;
+    }
+    if (postTypeFilter !== null && deal.post_type !== postTypeFilter) return false;
+    return true;
+  }
+
+  const visibleDeals = deals.filter(matchesFilters);
+
+  // One pin per business. Among that business's posts that match the
+  // current filters, the highest tier claims the pin (shape and color);
+  // ties go to the newest post.
+  const mapPins = useMemo(() => {
+    const best = new Map();
+    visibleDeals.forEach((deal) => {
+      const current = best.get(deal.business_id);
+      if (
+        !current ||
+        getTierRank(deal) < getTierRank(current) ||
+        (getTierRank(deal) === getTierRank(current) &&
+          new Date(deal.created_at || 0) > new Date(current.created_at || 0))
+      ) {
+        best.set(deal.business_id, deal);
+      }
+    });
+    return [...best.values()];
+  }, [visibleDeals]);
 
   // The list view shows one row per actual POST, not one row per tag -
   // unlike the map, where a multi-tagged deal correctly needs a separate
@@ -244,10 +277,10 @@ export default function Search() {
   // Distinct category names currently on the map — feeds the legend so it
   // only ever shows colors that are actually in use right now.
   const visibleCategories = useMemo(() => {
-    return [...new Set(visibleDeals.map((d) => d.category_name).filter(Boolean))].sort((a, b) =>
+    return [...new Set(mapPins.map((d) => d.category_name).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
     );
-  }, [visibleDeals]);
+  }, [mapPins]);
 
   return (
     <AppLayout>
@@ -297,7 +330,7 @@ export default function Search() {
               focusPosition={focusPosition}
               filterSignal={filterSignal}
             >
-              {visibleDeals.map((deal) => (
+              {mapPins.map((deal) => (
                 <Marker
                   key={deal.id}
                   position={{ lat: deal.latitude, lng: deal.longitude }}
