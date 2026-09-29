@@ -52,7 +52,7 @@ function getMarkerIcon(deal) {
   if (PAID_VIA.has(deal.posted_via)) {
     return { ...base, path: TRIANGLE_PATH, scale: 10, strokeWeight: 1.5 };
   }
-  return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE };
+  return { ...base, path: window.google?.maps?.SymbolPath?.CIRCLE, scale: 8 };
 }
 
 function getMarkerZIndex(deal) {
