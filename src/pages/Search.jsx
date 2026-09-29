@@ -47,7 +47,7 @@ function getMarkerIcon(deal) {
   };
 
   if (deal.is_frugull_exclusive) {
-    return { ...base, path: STAR_PATH, scale: 14, strokeWeight: 1.5 };
+    return { ...base, path: STAR_PATH, scale: 12, strokeWeight: 1.5 };
   }
   if (PAID_VIA.has(deal.posted_via)) {
     return { ...base, path: TRIANGLE_PATH, scale: 10, strokeWeight: 1.5 };
