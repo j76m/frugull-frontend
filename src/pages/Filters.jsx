@@ -131,17 +131,27 @@ export default function Filters() {
   // Anything else is grayed out, same idea as categories: don't let
   // people filter down to zero results. Already-selected items stay
   // enabled so they can always be unselected.
+  //
+  // Availability follows the category selection: with subcategories
+  // picked, only posts in those subcategories count. Nothing picked ->
+  // all live posts count.
+  const scopedDeals = useMemo(() => {
+    if (!deals) return [];
+    if (selectedSubs.size === 0) return deals;
+    return deals.filter((d) => selectedSubs.has(d.subcategory_id));
+  }, [deals, selectedSubs]);
+
   const activeDiscountTags = useMemo(() => {
     const set = new Set();
-    (deals || []).forEach((d) => (d.discount_tags || []).forEach((t) => set.add(t)));
+    scopedDeals.forEach((d) => (d.discount_tags || []).forEach((t) => set.add(t)));
     return set;
-  }, [deals]);
+  }, [scopedDeals]);
 
   const activeDays = useMemo(() => {
     const set = new Set();
-    (deals || []).forEach((d) => (d.valid_days_of_week || []).forEach((day) => set.add(day)));
+    scopedDeals.forEach((d) => (d.valid_days_of_week || []).forEach((day) => set.add(day)));
     return set;
-  }, [deals]);
+  }, [scopedDeals]);
 
   const dealCategories = ACTIVE_CATEGORIES.filter((cat) => DEAL_CATEGORY_NAMES.has(cat.name));
   const otherCategories = ACTIVE_CATEGORIES.filter((cat) => !DEAL_CATEGORY_NAMES.has(cat.name));
