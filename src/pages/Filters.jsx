@@ -127,6 +127,22 @@ export default function Filters() {
     });
   }
 
+  // Discount tags and days that at least one live post actually uses.
+  // Anything else is grayed out, same idea as categories: don't let
+  // people filter down to zero results. Already-selected items stay
+  // enabled so they can always be unselected.
+  const activeDiscountTags = useMemo(() => {
+    const set = new Set();
+    (deals || []).forEach((d) => (d.discount_tags || []).forEach((t) => set.add(t)));
+    return set;
+  }, [deals]);
+
+  const activeDays = useMemo(() => {
+    const set = new Set();
+    (deals || []).forEach((d) => (d.valid_days_of_week || []).forEach((day) => set.add(day)));
+    return set;
+  }, [deals]);
+
   const dealCategories = ACTIVE_CATEGORIES.filter((cat) => DEAL_CATEGORY_NAMES.has(cat.name));
   const otherCategories = ACTIVE_CATEGORIES.filter((cat) => !DEAL_CATEGORY_NAMES.has(cat.name));
 
@@ -243,20 +259,27 @@ export default function Filters() {
         <div className="pt-4 mt-4 pb-4 mb-4 border-t border-slate-200">
           <p className="text-brand-navy font-medium text-sm mb-2">Discounts offered</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {DISCOUNT_TAGS.map((tag) => (
-              <button
-                key={tag.value}
-                type="button"
-                onClick={() => toggleDiscountTag(tag.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  selectedDiscountTags.has(tag.value)
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
+            {DISCOUNT_TAGS.map((tag) => {
+              const isSelected = selectedDiscountTags.has(tag.value);
+              const isAvailable = isSelected || activeDiscountTags.has(tag.value);
+              return (
+                <button
+                  key={tag.value}
+                  type="button"
+                  disabled={!isAvailable}
+                  onClick={() => toggleDiscountTag(tag.value)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    isSelected
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : isAvailable
+                      ? 'bg-white text-brand-navy border-brand-link'
+                      : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  }`}
+                >
+                  {tag.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -264,20 +287,27 @@ export default function Filters() {
         <div>
           <p className="text-brand-navy font-medium text-sm mb-2">Valid on</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {DAYS_OF_WEEK.map((day) => (
-              <button
-                key={day.value}
-                type="button"
-                onClick={() => toggleDay(day.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                  selectedDays.has(day.value)
-                    ? 'bg-brand-navy text-white border-brand-navy'
-                    : 'bg-white text-brand-navy border-brand-link'
-                }`}
-              >
-                {day.label}
-              </button>
-            ))}
+            {DAYS_OF_WEEK.map((day) => {
+              const isSelected = selectedDays.has(day.value);
+              const isAvailable = isSelected || activeDays.has(day.value);
+              return (
+                <button
+                  key={day.value}
+                  type="button"
+                  disabled={!isAvailable}
+                  onClick={() => toggleDay(day.value)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    isSelected
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : isAvailable
+                      ? 'bg-white text-brand-navy border-brand-link'
+                      : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  }`}
+                >
+                  {day.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
