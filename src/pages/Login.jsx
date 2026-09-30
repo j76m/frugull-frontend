@@ -136,7 +136,7 @@ export default function Login() {
         <div className="text-center mb-2">
           <Wordmark className="h-24 mx-auto" />
           <p className="text-brand-navy font-semibold text-xl tracking-wide mt-2">
-            Local, Organized.
+            Local found.
           </p>
           <p className="text-slate-500 text-sm mt-1">
             Deals, happenings, and more around town.

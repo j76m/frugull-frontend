@@ -32,7 +32,7 @@ export default function HowItWorks() {
             Snap a photo of a deal, sale, or piece of local info, tag it, and pin it to the map
             for others to find.
           </p>
-          <p className="font-semibold text-brand-navy text-sm mb-3">Local, Organized.</p>
+          <p className="font-semibold text-brand-navy text-sm mb-3">Local found.</p>
           <p className="text-brand-gray text-sm italic">
             Sincerely,
             <br />
