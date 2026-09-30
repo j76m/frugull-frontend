@@ -553,7 +553,9 @@ export default function CreateDeal() {
 
                 {locationMode === 'search' ? (
                   <div>
-                    <label className="block text-sm text-slate-600 mb-1">Business</label>
+                    <label className="block text-sm text-slate-600 mb-1">
+                      {shareType === 'yard_sale' ? 'Location' : 'Business'}
+                    </label>
                     <BusinessSearchInput onSelect={handleBusinessSelect} selectedName={business?.name} />
                     {business && <p className="text-brand-gray text-xs mt-1">{business.address}</p>}
                     {businessError && <p className="text-red-500 text-xs mt-1">{businessError}</p>}
