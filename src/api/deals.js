@@ -4,9 +4,13 @@ import client from './client';
 // like right now (which method applies, and the max duration allowed) -
 // used by the Post screen to show an accurate duration picker before
 // submitting. Never consumes a credit, unlike the actual post itself.
-export async function fetchPreviewAllowance(businessId, subcategoryId) {
+export async function fetchPreviewAllowance(businessId, subcategoryId, useCredit = false) {
   const { data } = await client.get('/deals/preview-allowance', {
-    params: { businessId, subcategoryId: subcategoryId || undefined },
+    params: {
+      businessId,
+      subcategoryId: subcategoryId || undefined,
+      useCredit: useCredit ? 'true' : undefined,
+    },
   });
   return data;
 }
@@ -38,6 +42,7 @@ export async function createDeal({
   additionalTags,
   isFrugullExclusive,
   isRecurring,
+  useCredit,
 }) {
   const { data } = await client.post('/deals', {
     businessId,
@@ -56,6 +61,7 @@ export async function createDeal({
     additionalTags,
     isFrugullExclusive,
     isRecurring,
+    useCredit,
   });
   return data.deal ?? data;
 }

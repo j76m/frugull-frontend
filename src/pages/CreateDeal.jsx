@@ -11,6 +11,7 @@ import { getUploadUrl, uploadFileToS3 } from '../api/upload';
 import { createDeal, fetchPreviewAllowance } from '../api/deals';
 import { fetchMe } from '../api/auth';
 import { fetchSubscriptionStatus } from '../api/subscriptions';
+import { fetchCreditBalance } from '../api/credits';
 import { useAuth } from '../context/AuthContext';
 
 const DISCOUNT_TAGS = [
@@ -114,6 +115,10 @@ export default function CreateDeal() {
   const [happeningsMode, setHappeningsMode] = useState('date');
   // Deal / Farm Stand only: a Credits/Unlimited bonus. Needs at least one Valid Day.
   const [isRecurring, setIsRecurring] = useState(false);
+  // Credits: how many the account has, and whether the poster chose to
+  // spend one on this post (default is the Free weekly post).
+  const [creditBalance, setCreditBalance] = useState(0);
+  const [useCredit, setUseCredit] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -127,6 +132,10 @@ export default function CreateDeal() {
     fetchSubscriptionStatus()
       .then((sub) => setPlan(sub?.plan ?? 'free'))
       .catch(() => setPlan('free'));
+
+    fetchCreditBalance()
+      .then((bal) => setCreditBalance(Number(bal) || 0))
+      .catch(() => setCreditBalance(0));
   }, []);
 
   const shareCategories = categories.filter((c) => c.post_type === shareType);
@@ -180,14 +189,14 @@ export default function CreateDeal() {
       return;
     }
     setAllowanceLoading(true);
-    fetchPreviewAllowance(businessRecord.id, subcategoryId)
+    fetchPreviewAllowance(businessRecord.id, subcategoryId, useCredit)
       .then((result) => {
         setAllowance(result);
         setDurationDays(result.method !== 'free' ? result.maxDurationDays : null);
       })
       .catch(() => setAllowance(null))
       .finally(() => setAllowanceLoading(false));
-  }, [businessRecord?.id, subcategoryId]);
+  }, [businessRecord?.id, subcategoryId, useCredit]);
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
@@ -267,6 +276,7 @@ export default function CreateDeal() {
     setEventEndDate('');
     setHappeningsMode('date');
     setIsRecurring(false);
+    setUseCredit(false);
     setAdditionalTags([]);
   }
 
@@ -369,6 +379,7 @@ export default function CreateDeal() {
             : undefined,
         eventEndDate: usesDateModes && happeningsMode === 'range' ? eventEndDate : undefined,
         isRecurring: recurringOn ? true : undefined,
+        useCredit: canRecur && useCredit ? true : undefined,
         isCommunityHappenings,
         additionalTags: plan === 'unlimited' && validAdditionalTags.length > 0 ? validAdditionalTags : undefined,
         // Only sent when currently eligible - if the poster checked it and
@@ -749,6 +760,40 @@ export default function CreateDeal() {
             calendar's Reset button clears them - with a controlled value,
             iOS Reset restores the currently picked date instead. */}
         <div>
+          {canRecur &&
+            creditBalance > 0 &&
+            (allowance?.method === 'free' || (useCredit && allowance?.method === 'credit')) && (
+              <div className="mb-3">
+                <div className="flex justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUseCredit(false)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                      !useCredit
+                        ? 'bg-brand-navy text-white border-brand-navy'
+                        : 'bg-white text-brand-navy border-brand-link'
+                    }`}
+                  >
+                    Use Free (7 days)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUseCredit(true)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                      useCredit
+                        ? 'bg-brand-navy text-white border-brand-navy'
+                        : 'bg-white text-brand-navy border-brand-link'
+                    }`}
+                  >
+                    Use 1 credit
+                  </button>
+                </div>
+                <p className="text-brand-gray text-xs text-center mt-2">
+                  You have {creditBalance} credit{creditBalance === 1 ? '' : 's'}. A credit adds up to
+                  30 days and Recurring.
+                </p>
+              </div>
+            )}
           {canRecur && paidPost && (
             <div className="flex justify-center gap-2 mb-3">
               <button
