@@ -37,6 +37,7 @@ export async function createDeal({
   isCommunityHappenings,
   additionalTags,
   isFrugullExclusive,
+  isRecurring,
 }) {
   const { data } = await client.post('/deals', {
     businessId,
@@ -54,6 +55,7 @@ export async function createDeal({
     isCommunityHappenings,
     additionalTags,
     isFrugullExclusive,
+    isRecurring,
   });
   return data.deal ?? data;
 }
