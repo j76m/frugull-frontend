@@ -112,6 +112,8 @@ export default function CreateDeal() {
   // 'date' since a single specific date is the most common case (Grand
   // Opening, a comedy show), with Range and Recurring as opt-ins.
   const [happeningsMode, setHappeningsMode] = useState('date');
+  // Deal / Farm Stand only: a Credits/Unlimited bonus. Needs at least one Valid Day.
+  const [isRecurring, setIsRecurring] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -134,6 +136,13 @@ export default function CreateDeal() {
   const isCommunityHappenings = selectedCategory?.name === 'Community Happenings';
   const allowsEventDate = isActivities || isCommunityHappenings;
   const infoOnly = !!selectedCategory && selectedCategory.post_type !== 'deal';
+  const isYardSale = shareType === 'yard_sale';
+  const isJob = shareType === 'help_wanted';
+  const usesDateModes = isCommunityHappenings || isYardSale;
+  const canRecur = shareType === 'deal' || shareType === 'farm_stand';
+  const paidPost = !!allowance && allowance.method !== 'free';
+  const recurringOn = canRecur && paidPost && isRecurring;
+  const freeRunDays = infoOnly && shareType !== 'farm_stand' ? 30 : 7;
 
   // Post type is fully derived from category, never user-chosen - any
   // category whose post_type isn't 'deal' (Happenings, Farm Stands, Help
@@ -257,6 +266,7 @@ export default function CreateDeal() {
     setEventDate('');
     setEventEndDate('');
     setHappeningsMode('date');
+    setIsRecurring(false);
     setAdditionalTags([]);
   }
 
@@ -302,11 +312,17 @@ export default function CreateDeal() {
 
   // A mode that needs a date can't post without one - otherwise a
   // cleared Specific Date would silently fall through to Recurring
-  // (180 days) on the backend.
+  // (90 days) on the backend.
   const missingEventDate =
-    (isCommunityHappenings && happeningsMode === 'date' && !eventDate) ||
-    (isCommunityHappenings && happeningsMode === 'range' && (!eventDate || !eventEndDate)) ||
+    (usesDateModes && happeningsMode === 'date' && !eventDate) ||
+    (usesDateModes && happeningsMode === 'range' && (!eventDate || !eventEndDate)) ||
     (isActivities && isEventDate && !eventDate);
+
+  const yardSaleLastDate = eventEndDate || eventDate;
+  const yardSaleTooFar =
+    isYardSale &&
+    !!yardSaleLastDate &&
+    Math.round((new Date(yardSaleLastDate + 'T00:00:00') - new Date().setHours(0, 0, 0, 0)) / 86400000) > 29;
 
   const canSubmit =
     photoFile &&
@@ -315,6 +331,8 @@ export default function CreateDeal() {
     subcategoryId &&
     caption.trim().length > 0 &&
     !missingEventDate &&
+    !yardSaleTooFar &&
+    !(recurringOn && validDays.length === 0) &&
     !submitting;
 
   async function handleSubmit(e) {
@@ -338,18 +356,19 @@ export default function CreateDeal() {
         subcategoryId: Number(subcategoryId),
         caption: caption.trim(),
         imageUrl: publicUrl,
-        discountTags: discountTags.length > 0 && shareType !== 'yard_sale' ? discountTags : undefined,
-        validDaysOfWeek: validDays.length > 0 ? validDays : undefined,
+        discountTags: discountTags.length > 0 && !isYardSale && !isJob ? discountTags : undefined,
+        validDaysOfWeek: validDays.length > 0 && !isJob && !isYardSale ? validDays : undefined,
         requestedDurationDays: durationDays || undefined,
         postType,
-        isEventDate: isActivities ? isEventDate : isCommunityHappenings && happeningsMode !== 'recurring',
+        isEventDate: isActivities ? isEventDate : usesDateModes && happeningsMode !== 'recurring',
         eventDate:
           isActivities && isEventDate
             ? eventDate
-            : isCommunityHappenings && happeningsMode !== 'recurring'
+            : usesDateModes && happeningsMode !== 'recurring'
             ? eventDate
             : undefined,
-        eventEndDate: isCommunityHappenings && happeningsMode === 'range' ? eventEndDate : undefined,
+        eventEndDate: usesDateModes && happeningsMode === 'range' ? eventEndDate : undefined,
+        isRecurring: recurringOn ? true : undefined,
         isCommunityHappenings,
         additionalTags: plan === 'unlimited' && validAdditionalTags.length > 0 ? validAdditionalTags : undefined,
         // Only sent when currently eligible - if the poster checked it and
@@ -655,7 +674,7 @@ export default function CreateDeal() {
         </div>
 
         {/* 5. Discounts Offered - not offered for yard sales */}
-        {shareType !== 'yard_sale' && (
+        {!isYardSale && !isJob && (
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Discounts offered <span className="text-brand-gray">(optional)</span>
@@ -679,7 +698,8 @@ export default function CreateDeal() {
         </div>
         )}
 
-        {/* 6. Valid Days - available to every tier */}
+        {/* 6. Valid Days - not offered for Jobs or Yard Sales */}
+        {!isJob && !isYardSale && (
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Valid days <span className="text-brand-gray">(optional)</span>
@@ -722,12 +742,46 @@ export default function CreateDeal() {
           )}
         </div>
 
+        )}
+
         {/* 7. Expiration / Duration - the final cap on the post.
             Event date inputs use defaultValue="" (not value=) so the
             calendar's Reset button clears them - with a controlled value,
             iOS Reset restores the currently picked date instead. */}
         <div>
-          {isCommunityHappenings ? (
+          {canRecur && (
+            <div className="flex justify-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setIsRecurring(false)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                  !recurringOn
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                Runs until
+              </button>
+              <button
+                type="button"
+                disabled={!paidPost}
+                onClick={() => setIsRecurring(true)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  recurringOn
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-brand-navy border-brand-link'
+                }`}
+              >
+                Recurring{allowance?.method === 'free' ? ' · Credits' : ''}
+              </button>
+            </div>
+          )}
+          {recurringOn ? (
+            <p className="text-brand-gray text-sm">
+              Set which day(s) this happens using Valid Days above. This post stays live
+              for up to {allowance.maxDurationDays} days.
+            </p>
+          ) : usesDateModes ? (
             <>
               <div className="flex flex-wrap justify-center gap-2 mb-3">
                 <button
@@ -755,6 +809,7 @@ export default function CreateDeal() {
                 <button
                   type="button"
                   onClick={() => changeHappeningsMode('recurring')}
+                  hidden={isYardSale}
                   className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
                     happeningsMode === 'recurring'
                       ? 'bg-brand-navy text-white border-brand-navy'
@@ -812,7 +867,7 @@ export default function CreateDeal() {
               {happeningsMode === 'recurring' && (
                 <p className="text-brand-gray text-sm">
                   Set which day(s) this happens using Valid Days above. This post stays live
-                  for up to 180 days.
+                  for up to 90 days.
                 </p>
               )}
             </>
@@ -868,7 +923,7 @@ export default function CreateDeal() {
                     <p className="text-brand-gray text-sm">Checking...</p>
                   ) : allowance?.method === 'free' ? (
                     <p className="text-brand-navy text-sm">
-                      {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
+                      {freeRunDays} days (fixed for Frugull Free)
                     </p>
                   ) : allowance ? (
                     <>
@@ -893,7 +948,9 @@ export default function CreateDeal() {
             </>
           ) : (
             <>
-              <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+              {!canRecur && (
+                <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+              )}
               {!businessRecord || !subcategoryId ? (
                 <p className="text-brand-gray text-sm">
                   Select a location and subcategory to see how long this post can run.
@@ -902,7 +959,7 @@ export default function CreateDeal() {
                 <p className="text-brand-gray text-sm">Checking...</p>
               ) : allowance?.method === 'free' ? (
                 <p className="text-brand-navy text-sm">
-                  {postType === 'info' ? '30 days' : '7 days'} (fixed for Frugull Free)
+                  {freeRunDays} days (fixed for Frugull Free)
                 </p>
               ) : allowance ? (
                 <>
@@ -926,6 +983,9 @@ export default function CreateDeal() {
           )}
         </div>
 
+        {yardSaleTooFar && (
+          <p className="text-red-500 text-sm">Yard sale dates can be up to 30 days out.</p>
+        )}
         {error && <p className="text-red-500 text-sm">{error}</p>}
         {success && <p className="text-green-600 text-sm text-center">Posted!</p>}
 
