@@ -949,7 +949,9 @@ export default function CreateDeal() {
           ) : (
             <>
               {!canRecur && (
-                <label className="block text-sm text-slate-600 mb-2">Runs until</label>
+                <label className="block text-sm text-slate-600 mb-2">
+                  {isJob ? 'Runs for' : 'Runs until'}
+                </label>
               )}
               {!businessRecord || !subcategoryId ? (
                 <p className="text-brand-gray text-sm">
@@ -968,6 +970,10 @@ export default function CreateDeal() {
                     </p>
                   )}
                 </>
+              ) : isJob && allowance ? (
+                <p className="text-brand-navy text-sm">
+                  {allowance.maxDurationDays} days
+                </p>
               ) : allowance ? (
                 <>
                   <input
