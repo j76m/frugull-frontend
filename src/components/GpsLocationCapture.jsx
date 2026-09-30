@@ -23,7 +23,7 @@ function getGpsPosition() {
 // isn't available, posting this way just isn't possible, since an
 // approximate city-level location isn't accurate enough to actually find
 // a specific farm stand.
-export default function GpsLocationCapture({ onLocationReady, name, onNameChange }) {
+export default function GpsLocationCapture({ onLocationReady, name, onNameChange, isYardSale }) {
   const [status, setStatus] = useState('idle'); // idle | locating | done | error
   const [coords, setCoords] = useState(null);
 
@@ -43,12 +43,14 @@ export default function GpsLocationCapture({ onLocationReady, name, onNameChange
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm text-slate-600 mb-1">Stand name</label>
+        <label className="block text-sm text-slate-600 mb-1">
+          {isYardSale ? 'Sale name' : 'Stand name'}
+        </label>
         <input
           type="text"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          placeholder="e.g. Anderson Family Farm Stand"
+          placeholder={isYardSale ? 'e.g. Anderson Family Yard/Garage Sale' : 'e.g. Anderson Family Farm Stand'} 
           className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
         />
       </div>
@@ -78,7 +80,7 @@ export default function GpsLocationCapture({ onLocationReady, name, onNameChange
           </p>
         )}
         <p className="text-brand-gray text-xs mt-1">
-          Stand somewhere near the stand and tap this to pin its exact location.
+          {isYardSale ? 'Stand somewhere near the sale and tap this to pin its exact location.' : 'Stand somewhere near the stand and tap this to pin its exact location.'}
         </p>
       </div>
     </div>

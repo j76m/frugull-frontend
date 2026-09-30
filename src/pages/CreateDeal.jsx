@@ -338,7 +338,7 @@ export default function CreateDeal() {
         subcategoryId: Number(subcategoryId),
         caption: caption.trim(),
         imageUrl: publicUrl,
-        discountTags: discountTags.length > 0 ? discountTags : undefined,
+        discountTags: discountTags.length > 0 && shareType !== 'yard_sale' ? discountTags : undefined,
         validDaysOfWeek: validDays.length > 0 ? validDays : undefined,
         requestedDurationDays: durationDays || undefined,
         postType,
@@ -566,6 +566,7 @@ export default function CreateDeal() {
                   </div>
                 ) : (
                   <GpsLocationCapture
+                    isYardSale={shareType === 'yard_sale'}
                     name={gpsStandName}
                     onNameChange={setGpsStandName}
                     onLocationReady={setGpsCoords}
@@ -653,7 +654,8 @@ export default function CreateDeal() {
           />
         </div>
 
-        {/* 5. Discounts Offered */}
+        {/* 5. Discounts Offered - not offered for yard sales */}
+        {shareType !== 'yard_sale' && (
         <div>
           <label className="block text-sm text-slate-600 mb-2">
             Discounts offered <span className="text-brand-gray">(optional)</span>
@@ -675,6 +677,7 @@ export default function CreateDeal() {
             ))}
           </div>
         </div>
+        )}
 
         {/* 6. Valid Days - available to every tier */}
         <div>
