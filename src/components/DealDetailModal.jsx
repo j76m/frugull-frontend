@@ -391,6 +391,7 @@ export default function DealDetailModal({
           )}
           {formatValidDays(deal.valid_days_of_week) && (
             <p className="text-brand-navy text-xs font-medium mt-1">
+              {deal.is_recurring ? 'Recurring · ' : ''}
               {formatValidDays(deal.valid_days_of_week)}
             </p>
           )}
