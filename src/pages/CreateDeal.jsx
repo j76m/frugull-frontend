@@ -749,7 +749,7 @@ export default function CreateDeal() {
             calendar's Reset button clears them - with a controlled value,
             iOS Reset restores the currently picked date instead. */}
         <div>
-          {canRecur && (
+          {canRecur && paidPost && (
             <div className="flex justify-center gap-2 mb-3">
               <button
                 type="button"
@@ -958,9 +958,16 @@ export default function CreateDeal() {
               ) : allowanceLoading ? (
                 <p className="text-brand-gray text-sm">Checking...</p>
               ) : allowance?.method === 'free' ? (
-                <p className="text-brand-navy text-sm">
-                  {freeRunDays} days (fixed for Frugull Free)
-                </p>
+                <>
+                  <p className="text-brand-navy text-sm">
+                    {freeRunDays} days (fixed for Frugull Free)
+                  </p>
+                  {canRecur && (
+                    <p className="text-brand-gray text-xs mt-1">
+                      Recurring posts need a Credits or Unlimited plan.
+                    </p>
+                  )}
+                </>
               ) : allowance ? (
                 <>
                   <input
