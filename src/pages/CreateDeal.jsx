@@ -464,7 +464,7 @@ export default function CreateDeal() {
             multiple, unrelated offerings (e.g. a sign showing both a food
             special and a drink special) by tagging additional category/
             subcategory pairs onto this same post. */}
-        {plan === 'unlimited' && categoryId && (
+        {plan === 'unlimited' && categoryId && shareType !== 'yard_sale' && (
           <div className="space-y-3">
             {additionalTags.map((tag, index) => {
               const tagCategory = categories.find((c) => String(c.id) === String(tag.categoryId));
