@@ -13,7 +13,7 @@ function getAddressComponent(components, type, useShortName = false) {
   return useShortName ? match.short_name : match.long_name;
 }
 
-export default function BusinessSearchInput({ onSelect, selectedName }) {
+export default function BusinessSearchInput({ onSelect, selectedName, placeholder }) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -93,7 +93,7 @@ export default function BusinessSearchInput({ onSelect, selectedName }) {
     >
       <input
         type="text"
-        placeholder={selectedName || 'Search for a business...'}
+        placeholder={selectedName || placeholder || 'Search for a business...'}
         className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
       />
     </Autocomplete>
