@@ -26,6 +26,7 @@ const SHARE_TYPES = [
   { value: 'happening', label: 'a Community Happening' },
   { value: 'help_wanted', label: 'a Job' },
   { value: 'farm_stand', label: 'a Farm Stand' },
+  { value: 'yard_sale', label: 'a Yard/Garage Sale' },
 ];
 
 const DAYS_OF_WEEK = [
@@ -234,6 +235,9 @@ export default function CreateDeal() {
     if (nextType && nextType !== 'deal') {
       const match = categories.find((c) => c.post_type === nextType);
       applyCategory(match ? String(match.id) : '');
+      if (match && match.subcategories.length === 1) {
+        setSubcategoryId(String(match.subcategories[0].id));
+      }
     } else {
       applyCategory('');
     }
@@ -408,7 +412,7 @@ export default function CreateDeal() {
           </select>
         </div>
 
-        {shareType && (
+        {shareType && !(shareType !== 'deal' && selectedCategory?.subcategories.length === 1) && (
         <div className={shareType === 'deal' ? 'grid grid-cols-2 gap-3' : ''}>
           {shareType === 'deal' && (
           <div>

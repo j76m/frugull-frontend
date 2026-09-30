@@ -17,6 +17,7 @@ const CATEGORY_COLORS = {
   Dispensary: '#111827', // near-black - discreet, premium
   'Community Happenings': '#ec4899', // pink - celebration
   'Farm Stands': '#16a34a', // green - fresh, natural (only green)
+  'Yard/Garage Sale': '#92400e', // brown - cardboard boxes, secondhand
   'Help Wanted': '#0891b2', // teal - opportunity, fresh start
 
   // Hidden categories - no live pins. If any are re-enabled, pick a
