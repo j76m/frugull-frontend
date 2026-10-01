@@ -49,6 +49,24 @@ export default function PostingPlans() {
           </ul>
         </section>
 
+        <section>
+          <h2 className="text-lg font-semibold text-brand-navy mb-2">Using a credit</h2>
+          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
+            <li>
+              On a Deal or Farm Stand, choose Use Free (7 days) or Use 1 credit. Free is the
+              default
+            </li>
+            <li>
+              If your Free post for that business location and subcategory is already used this
+              week, a credit is used automatically
+            </li>
+            <li>
+              Recurring repeats a post on the days you pick, such as every Tuesday, until its end
+              date
+            </li>
+          </ul>
+        </section>
+
         <section id="unlimited" className="scroll-mt-20">
           <h2 className="text-lg font-semibold text-brand-navy mb-2">
             Frugull Unlimited — $30/month or $150/6 months
@@ -102,24 +120,6 @@ export default function PostingPlans() {
             <li>Pick a specific date and/or date range, up to 30 days out</li>
             <li>Removed automatically after the end date</li>
             <li>No discounts or Recurring</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-brand-navy mb-2">Using a credit</h2>
-          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
-            <li>
-              On a Deal or Farm Stand, choose Use Free (7 days) or Use 1 credit. Free is the
-              default
-            </li>
-            <li>
-              If your Free post for that business location and subcategory is already used this
-              week, a credit is used automatically
-            </li>
-            <li>
-              Recurring repeats a post on the days you pick, such as every Tuesday, until its end
-              date
-            </li>
           </ul>
         </section>
 
