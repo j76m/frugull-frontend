@@ -65,8 +65,8 @@ export default function BottomTabs() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `cursor-pointer flex flex-col items-center justify-center gap-1 py-2 px-5 mx-1 rounded-xl text-xs font-medium text-brand-link transition-colors ${
-                isActive ? 'bg-slate-100' : 'hover:bg-slate-100'
+              `cursor-pointer flex flex-col items-center justify-center gap-1 py-2 px-5 mx-1 rounded-xl text-xs font-medium transition-colors ${
+                isActive ? 'bg-brand-link text-white font-semibold' : 'text-brand-gray hover:bg-slate-100'
               }`
             }
           >
