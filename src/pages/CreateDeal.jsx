@@ -408,6 +408,10 @@ export default function CreateDeal() {
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
+  // Latest date a Community Happening (90-day ceiling) or Yard/Garage Sale
+  // (30-day ceiling) can be set for - matches the backend caps.
+  const eventMaxDate = new Date(today);
+  eventMaxDate.setDate(eventMaxDate.getDate() + (isYardSale ? 29 : 89));
   const maxDate = allowance ? new Date(today) : null;
   if (maxDate && allowance) maxDate.setDate(maxDate.getDate() + allowance.maxDurationDays);
   const selectedDate = durationDays
@@ -877,11 +881,17 @@ export default function CreateDeal() {
                     type="date"
                     defaultValue=""
                     min={toDateInputValue(today)}
+                    max={toDateInputValue(eventMaxDate)}
                     onChange={(e) => setEventDate(e.target.value)}
                     className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
                   />
                   <p className="text-brand-gray text-xs mt-1">
                     This post will automatically expire at midnight the day after the event.
+                  </p>
+                  <p className="text-brand-gray text-xs mt-1">
+                    {isYardSale
+                      ? 'You can choose a date up to 30 days out.'
+                      : 'You can choose a date up to 90 days out.'}
                   </p>
                 </>
               )}
@@ -894,6 +904,7 @@ export default function CreateDeal() {
                       type="date"
                       defaultValue=""
                       min={toDateInputValue(today)}
+                      max={toDateInputValue(eventMaxDate)}
                       onChange={(e) => setEventDate(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
                     />
@@ -904,12 +915,18 @@ export default function CreateDeal() {
                       type="date"
                       defaultValue=""
                       min={eventDate || toDateInputValue(today)}
+                      max={toDateInputValue(eventMaxDate)}
                       onChange={(e) => setEventEndDate(e.target.value)}
                       className="w-full rounded-xl bg-white border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-brand-link"
                     />
                   </div>
                   <p className="text-brand-gray text-xs col-span-2 mt-1">
                     This post will automatically expire at midnight the day after it ends.
+                  </p>
+                  <p className="text-brand-gray text-xs col-span-2">
+                    {isYardSale
+                      ? 'Dates can be up to 30 days out.'
+                      : 'Dates can be up to 90 days out.'}
                   </p>
                 </div>
               )}
