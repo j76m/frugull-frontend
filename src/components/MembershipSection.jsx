@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   fetchSubscriptionStatus,
   cancelUnlimited,
@@ -154,7 +155,21 @@ export default function MembershipSection() {
   return (
     <div className="mt-6 pt-4 border-t border-slate-200">
       <div className="max-w-sm mx-auto">
-        <p className="text-brand-navy font-medium text-sm px-4 mb-3">Membership</p>
+        <p className="text-brand-navy font-medium text-sm px-4 mb-1">Posting Plans</p>
+        <p className="text-brand-gray text-xs px-4 mb-3">
+          See what each plan includes:{' '}
+          <Link to="/posting-plans#free" className="text-brand-link font-medium underline">
+            Free
+          </Link>
+          {' · '}
+          <Link to="/posting-plans#credits" className="text-brand-link font-medium underline">
+            Credits
+          </Link>
+          {' · '}
+          <Link to="/posting-plans#unlimited" className="text-brand-link font-medium underline">
+            Unlimited
+          </Link>
+        </p>
 
         {notice && <p className="text-brand-navy text-sm px-4 mb-3">{notice}</p>}
         {error && <p className="text-red-500 text-sm px-4 mb-3">{error}</p>}

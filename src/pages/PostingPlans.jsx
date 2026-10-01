@@ -1,9 +1,18 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
 import TopNav from '../components/TopNav';
 
 export default function PostingPlans() {
   const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  // Opening /posting-plans#credits scrolls to that plan's section.
+  useEffect(() => {
+    if (!hash) return;
+    const el = document.getElementById(hash.slice(1));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [hash]);
 
   return (
     <AppLayout>
@@ -18,7 +27,7 @@ export default function PostingPlans() {
           </p>
         </div>
 
-        <section>
+        <section id="free" className="scroll-mt-20">
           <h2 className="text-lg font-semibold text-brand-navy mb-2">Frugull Free — $0</h2>
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>One post per business location and subcategory each week</li>
@@ -27,7 +36,7 @@ export default function PostingPlans() {
           </ul>
         </section>
 
-        <section>
+        <section id="credits" className="scroll-mt-20">
           <h2 className="text-lg font-semibold text-brand-navy mb-2">
             Post by Credits — 5 for $15
           </h2>
@@ -40,7 +49,7 @@ export default function PostingPlans() {
           </ul>
         </section>
 
-        <section>
+        <section id="unlimited" className="scroll-mt-20">
           <h2 className="text-lg font-semibold text-brand-navy mb-2">
             Frugull Unlimited — $30/month or $150/6 months
           </h2>
