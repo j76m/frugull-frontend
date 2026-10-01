@@ -28,7 +28,7 @@ export default function MembershipSection() {
     const timers = [];
 
     if (checkout === 'success') {
-      setNotice('Payment received. Updating your membership…');
+      setNotice('Payment received. Updating your Posting Plan…');
       [1500, 4000, 8000].forEach((delay) => {
         timers.push(setTimeout(loadStatus, delay));
       });
@@ -65,7 +65,7 @@ export default function MembershipSection() {
       setSubscription(sub);
       setCredits(bal);
     } catch {
-      setError('Could not load membership status.');
+      setError('Could not load your Posting Plan.');
     }
   }
 
