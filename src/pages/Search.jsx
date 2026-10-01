@@ -477,9 +477,12 @@ export default function Search() {
         />
       )}
 
-      <div className="text-center pb-4">
+      <div className="text-center pb-4 flex items-center justify-center gap-5">
         <Link to="/how-it-works" className="text-brand-link text-sm font-medium underline">
           How Frugull Works
+        </Link>
+        <Link to="/posting-plans" className="text-brand-link text-sm font-medium underline">
+          Posting Plans
         </Link>
       </div>
     </AppLayout>

@@ -75,46 +75,6 @@ export default function HowItWorks() {
             <li>Tap Add to Home screen; tap Add</li>
           </ul>
         </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-brand-navy mb-2">Frugull Free</h2>
-          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
-            <li>One live post per business, per subcategory</li>
-            <li>Each post runs for 7 days</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-brand-navy mb-2">
-            Post by Credits — 5 for $15
-          </h2>
-          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
-            <li>One live post per business, per subcategory</li>
-            <li>Up to 30 days per post</li>
-            <li>Credits never expire</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-brand-navy mb-2">
-            Frugull Unlimited — $30/month or $150/6 months
-          </h2>
-          <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
-            <li>Covers one business location</li>
-            <li>Additional locations: $15/month or $75/6 months each</li>
-            <li>Post as many deals as you want, all live at the same time</li>
-            <li>Up to 90 days per post</li>
-            <li>
-              Tag one post with multiple subcategories (e.g., one sign showing a food deal
-              and a drink special can appear under both)
-            </li>
-            <li>Unlimited posts get priority search placement over Credits and Free</li>
-          </ul>
-        </section>
-
-        <p className="text-brand-gray text-xs text-center pt-4">
-          You can upgrade or manage your plan anytime from your Profile.
-        </p>
       </div>
     </AppLayout>
   );

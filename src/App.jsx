@@ -8,6 +8,7 @@ import CreateDeal from './pages/CreateDeal';
 import Profile from './pages/Profile';
 import Filters from './pages/Filters';
 import HowItWorks from './pages/HowItWorks';
+import PostingPlans from './pages/PostingPlans';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/" element={<Search />} />
             <Route path="/filters" element={<Filters />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/posting-plans" element={<PostingPlans />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route
