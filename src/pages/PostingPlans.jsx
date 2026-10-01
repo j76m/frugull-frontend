@@ -32,6 +32,7 @@ export default function PostingPlans() {
           <ul className="text-brand-gray text-sm leading-relaxed space-y-1.5 list-disc pl-5">
             <li>One post per business location and subcategory each week</li>
             <li>Deals and Farm Stands run 7 days; Jobs run 30 days</li>
+            <li>Community Happenings and Yard/Garage Sales run on the dates you pick</li>
             <li>Earn 1 point for every post</li>
           </ul>
         </section>
