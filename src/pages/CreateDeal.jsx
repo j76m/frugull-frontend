@@ -684,6 +684,45 @@ export default function CreateDeal() {
           />
         </div>
 
+        {/* Credits: choose the Free post or spend a credit. Sits right under
+            the description so the options a credit unlocks are visible. */}
+        {canRecur &&
+          creditBalance > 0 &&
+          (allowance?.method === 'free' || (useCredit && allowance?.method === 'credit')) && (
+            <div>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUseCredit(false)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    !useCredit
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Use Free (7 days)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseCredit(true)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
+                    useCredit
+                      ? 'bg-brand-navy text-white border-brand-navy'
+                      : 'bg-white text-brand-navy border-brand-link'
+                  }`}
+                >
+                  Use 1 credit
+                </button>
+              </div>
+              <p className="text-brand-gray text-xs text-center mt-2">
+                You have {creditBalance} credit{creditBalance === 1 ? '' : 's'}.{' '}
+                {shareType === 'deal'
+                  ? 'A credit adds up to 30 days, Recurring and the Frugull Exclusive option.'
+                  : 'A credit adds up to 30 days and Recurring.'}
+              </p>
+            </div>
+          )}
+
         {/* 5. Discounts Offered - not offered for yard sales */}
         {!isYardSale && !isJob && (
         <div>
@@ -760,40 +799,6 @@ export default function CreateDeal() {
             calendar's Reset button clears them - with a controlled value,
             iOS Reset restores the currently picked date instead. */}
         <div>
-          {canRecur &&
-            creditBalance > 0 &&
-            (allowance?.method === 'free' || (useCredit && allowance?.method === 'credit')) && (
-              <div className="mb-3">
-                <div className="flex justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setUseCredit(false)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                      !useCredit
-                        ? 'bg-brand-navy text-white border-brand-navy'
-                        : 'bg-white text-brand-navy border-brand-link'
-                    }`}
-                  >
-                    Use Free (7 days)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUseCredit(true)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium border-2 ${
-                      useCredit
-                        ? 'bg-brand-navy text-white border-brand-navy'
-                        : 'bg-white text-brand-navy border-brand-link'
-                    }`}
-                  >
-                    Use 1 credit
-                  </button>
-                </div>
-                <p className="text-brand-gray text-xs text-center mt-2">
-                  You have {creditBalance} credit{creditBalance === 1 ? '' : 's'}. A credit adds up to
-                  30 days and Recurring.
-                </p>
-              </div>
-            )}
           {canRecur && paidPost && (
             <div className="flex justify-center gap-2 mb-3">
               <button
