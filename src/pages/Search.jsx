@@ -323,7 +323,7 @@ export default function Search() {
             <div className="w-[150px] flex-shrink-0" aria-hidden="true" />
           </div>
 
-          <div className="relative h-[60vh]">
+          <div className="relative h-[calc(100dvh_-_420px)] min-h-[260px]">
             <DealMap
               dealPoints={visibleDeals.map((d) => ({ lat: d.latitude, lng: d.longitude }))}
               onSearchArea={handleSearchArea}
