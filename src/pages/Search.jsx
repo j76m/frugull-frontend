@@ -353,7 +353,7 @@ export default function Search() {
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="text-brand-gray">▲</span>
-                  Featured
+                  Paid Post
                 </span>
               </div>
               <span className="flex items-center gap-1">
