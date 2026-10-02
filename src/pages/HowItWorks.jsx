@@ -26,7 +26,7 @@ export default function HowItWorks() {
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
             Frugull extends that reach by putting what businesses already advertise in front of
             anyone searching for exactly that. It's a hyper-local map of real deals,
-            happenings, and more built by the community, not algorithms or paid ads.
+            happenings, and more, built by the community, not algorithms or paid ads.
           </p>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
             Snap a photo of a sign, tag it, and pin it to the map
