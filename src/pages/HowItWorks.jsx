@@ -19,17 +19,17 @@ export default function HowItWorks() {
             Welcome to Frugull,
           </p>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
-            I started Frugull because deals around town are typically displayed on chalkboards,
-            window signs, and in-store print, yet only the people who happen to walk by or step
+            I started Frugull because deals and happenings around town are typically displayed on chalkboards,
+            window signs, in-store print and flyers, yet only the people who happen to walk by or step
             inside ever discover them.
           </p>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
             Frugull extends that reach by putting what businesses already advertise in front of
-            anyone searching for exactly that. It's a hyper-local map of real deals and
-            happenings, built by the community, not algorithms or paid ads.
+            anyone searching for exactly that. It's a hyper-local map of real deals,
+            happenings, and more built by the community, not algorithms or paid ads.
           </p>
           <p className="text-brand-gray text-sm leading-relaxed mb-3">
-            Snap a photo of a deal, sale, or piece of local info, tag it, and pin it to the map
+            Snap a photo of a sign, tag it, and pin it to the map
             for others to find.
           </p>
           <p className="font-semibold text-brand-navy text-sm mb-3">Local found.</p>
